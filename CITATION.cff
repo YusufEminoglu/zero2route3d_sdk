@@ -1,0 +1,13 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+  - family-names: "Eminoğlu"
+    given-names: "Yusuf"
+    email: "yusufeminoglu@gmail.com"
+title: "zero2route3d-sdk"
+version: "0.1.0"
+date-released: "2026-08-24"
+license: "MIT"
+repository-code: "https://github.com/YusufEminoglu/zero2route3d_sdk"
+url: "https://pypi.org/project/zero2route3d-sdk/"
+abstract: "Headless 3D spatial mobility, biomechanical human kinematics, and multi-criteria routing engine."
