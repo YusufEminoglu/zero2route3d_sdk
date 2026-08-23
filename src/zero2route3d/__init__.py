@@ -13,11 +13,24 @@ from .accessibility_equity import (
     ZoneAccessibilityRecord,
 )
 from .ahp_engine import AHPEngine, AHPResult
+from .api import (
+    match_gps_track_3d,
+    solve_3d_isochrones,
+    solve_3d_route,
+    solve_4d_pareto_frontier,
+)
 from .basemap import add_osm_basemap
 from .copernicus_dem import CopernicusDemError, CopernicusDemTileSource
 from .environmental_raster import EnvironmentalSurfaceSampler, MCDAWeights
 from .evacuation import EvacuationPlan, EvacuationRouter, HazardZone
 from .html_bundler import StandaloneHtmlBundler
+from .integrations import (
+    from_geodataframe,
+    sample_rasterio_dem,
+    to_geodataframe,
+    to_networkx_digraph,
+    to_shapely_linestring,
+)
 from .isochrone_engine import IsochroneBand, IsochroneEngine3D, IsochroneResult
 from .kinematics import (
     aerodynamic_drag_power,
@@ -95,6 +108,15 @@ __all__ = [
     "AHPEngine",
     "AHPResult",
     "add_osm_basemap",
+    "solve_3d_route",
+    "solve_3d_isochrones",
+    "solve_4d_pareto_frontier",
+    "match_gps_track_3d",
+    "to_geodataframe",
+    "from_geodataframe",
+    "to_networkx_digraph",
+    "to_shapely_linestring",
+    "sample_rasterio_dem",
     "CopernicusDemError",
     "CopernicusDemTileSource",
     "EnvironmentalSurfaceSampler",

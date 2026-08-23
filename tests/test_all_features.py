@@ -406,6 +406,60 @@ class TestZero2Route3DSDK(unittest.TestCase):
         tiles = CopernicusDemTileSource.tiles_for_bbox([27.0, 38.0, 27.8, 38.8])
         self.assertEqual(len(tiles), 1)
 
+    def test_high_level_api_solve_route_and_isochrones(self) -> None:
+        from zero2route3d import solve_3d_isochrones, solve_3d_route
+
+        segments = fixture_network_segments()
+
+        route = solve_3d_route((27.11, 38.41), (27.14, 38.44), network=segments, profile="adult")
+        self.assertTrue(route.is_network_matched)
+        self.assertGreater(route.statistics.total_distance_m, 100.0)
+
+        iso = solve_3d_isochrones(
+            (27.12, 38.42), network=segments, profile="adult", time_intervals_min=[5, 10]
+        )
+        self.assertEqual(len(iso.bands), 2)
+
+    def test_cli_execution(self) -> None:
+        import io
+        import sys
+
+        from zero2route3d.cli import main
+
+        saved_stdout = sys.stdout
+        sys.stdout = io.StringIO()
+        try:
+            exit_code = main(["profiles"])
+            out = sys.stdout.getvalue()
+            self.assertEqual(exit_code, 0)
+            self.assertIn("Mobility Profiles Catalog", out)
+            self.assertIn("wheelchair", out)
+        finally:
+            sys.stdout = saved_stdout
+
+    def test_geopandas_and_networkx_integrations(self) -> None:
+        from zero2route3d.integrations import (
+            from_geodataframe,
+            to_geodataframe,
+            to_networkx_digraph,
+        )
+
+        segments = fixture_network_segments()
+
+        # NetworkX conversion
+        nx_graph = to_networkx_digraph(segments)
+        self.assertGreater(len(nx_graph.nodes), 5)
+        self.assertGreater(len(nx_graph.edges), 5)
+
+        # GeoDataFrame conversion
+        gdf = to_geodataframe(segments)
+        self.assertEqual(len(gdf), len(segments))
+        self.assertIn("highway_type", gdf.columns)
+
+        # Re-import from GeoDataFrame
+        reimported = from_geodataframe(gdf)
+        self.assertEqual(len(reimported), len(segments))
+
 
 if __name__ == "__main__":
     unittest.main()

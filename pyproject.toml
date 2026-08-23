@@ -45,6 +45,9 @@ dev = [
     "mypy>=1.0.0",
 ]
 
+[project.scripts]
+zero2route3d = "zero2route3d.cli:main"
+
 [project.urls]
 Homepage = "https://github.com/YusufEminoglu/zero2route3d_sdk"
 Repository = "https://github.com/YusufEminoglu/zero2route3d_sdk"
