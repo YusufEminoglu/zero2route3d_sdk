@@ -76,6 +76,11 @@ from .pareto_router import (
     ParetoMultiObjectiveRouter,
     ParetoRouteSolution,
 )
+from .plotting import (
+    plot_elevation_profile,
+    plot_lorenz_equity_curve,
+    plot_pareto_frontier_2d,
+)
 from .profile_dxf import export_route_to_dxf_3d
 from .profile_stats import (
     CueInstruction,
@@ -117,6 +122,9 @@ __all__ = [
     "to_networkx_digraph",
     "to_shapely_linestring",
     "sample_rasterio_dem",
+    "plot_elevation_profile",
+    "plot_pareto_frontier_2d",
+    "plot_lorenz_equity_curve",
     "CopernicusDemError",
     "CopernicusDemTileSource",
     "EnvironmentalSurfaceSampler",

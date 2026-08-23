@@ -128,7 +128,11 @@ def to_geodataframe(
                     "climb_m": items.statistics.elevation_gain_m,
                     "descent_m": items.statistics.elevation_loss_m,
                     "max_slope_pct": items.statistics.max_slope_pct,
-                    "profile": items.statistics.profile_name,
+                    "profile": getattr(
+                        getattr(items, "profile", None),
+                        "name",
+                        getattr(items, "profile_name", "3D Route"),
+                    ),
                 }
             )
     elif isinstance(items, list):

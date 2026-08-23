@@ -40,11 +40,8 @@ class StandaloneHtmlBundler:
             return [cls._json_safe(item) for item in value]
         return value
 
-    def export_standalone_html(
-        self, result_or_geojson: Union[RouteResult3D, Dict[str, Any]], output_path: Path
-    ) -> None:
-        """Generate standalone HTML document with embedded data and JavaScript."""
-        output_path.parent.mkdir(parents=True, exist_ok=True)
+    def bundle(self, result_or_geojson: Union[RouteResult3D, Dict[str, Any]]) -> str:
+        """Generate standalone HTML document string with embedded data and JavaScript."""
         if isinstance(result_or_geojson, RouteResult3D):
             geojson_data = result_or_geojson.to_geojson_feature()
             profile_name = str(result_or_geojson.profile.name)
@@ -135,7 +132,7 @@ class StandaloneHtmlBundler:
             "import { VoiceCueSystem } from './VoiceCueSystem.js';", ""
         )
 
-        html_template = f"""<!DOCTYPE html>
+        return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -206,6 +203,13 @@ class StandaloneHtmlBundler:
 </body>
 </html>"""
 
-        temp_path = output_path.with_suffix(output_path.suffix + ".tmp")
+    def export_standalone_html(
+        self, result_or_geojson: Union[RouteResult3D, Dict[str, Any]], output_path: Union[str, Path]
+    ) -> None:
+        """Generate standalone HTML document with embedded data and JavaScript."""
+        out_p = Path(output_path)
+        out_p.parent.mkdir(parents=True, exist_ok=True)
+        html_template = self.bundle(result_or_geojson)
+        temp_path = out_p.with_suffix(out_p.suffix + ".tmp")
         temp_path.write_text(html_template, encoding="utf-8")
-        temp_path.replace(output_path)
+        temp_path.replace(out_p)

@@ -69,80 +69,79 @@ pip install "zero2route3d-sdk[geo]"
 
 ## 🚀 Quickstart
 
-### 1. Biomechanical Kinematics & Walking Speed
+### 1. High-Level One-Line Routing & Isochrones
 
 ```python
-from zero2route3d import tobler_walking_speed, minetti_energy_cost, cycling_energy_cost
+import zero2route3d as zr3d
 
-# Walking speed on a +8% incline (km/h)
-speed = tobler_walking_speed(slope_decimal=0.08, base_speed_kmh=5.0)
-print(f"Uphill walking speed: {speed:.2f} km/h")
-
-# Metabolic energy cost (Joules per kg per meter)
-energy_j_kg_m = minetti_energy_cost(gradient_decimal=0.08)
-print(f"Energy cost: {energy_j_kg_m:.2f} J/(kg*m)")
-```
-
-### 2. 3D Least-Cost Routing
-
-```python
-from zero2route3d import RoutingEngine3D, RoadSegment, get_profile
-
-# Initialize 3D routing engine
-engine = RoutingEngine3D()
-
-# Define 3D network segments: RoadSegment(id, p1=(lon, lat, elev), p2=(lon, lat, elev), ...)
-engine.add_segment(RoadSegment("seg_1", (27.138, 38.419, 10.0), (27.140, 38.421, 25.0), length_m=280.0, highway_type="residential"))
-engine.add_segment(RoadSegment("seg_2", (27.140, 38.421, 25.0), (27.145, 38.425, 40.0), length_m=520.0, highway_type="secondary"))
-
-# Solve for Wheelchair ADA profile (strictly penalizes slopes > 5% and stairs)
-profile = get_profile("wheelchair")
-route = engine.solve_route(
-    start_pt=(27.138, 38.419, 10.0),
-    end_pt=(27.145, 38.425, 40.0),
-    profile=profile
+# Solve 3D Least-Cost Route in 1 line
+route = zr3d.solve_3d_route(
+    origin=(27.11, 38.41),
+    destination=(27.14, 38.44),
+    network="izmir_network.geojson",  # Or GeoDataFrame / list of RoadSegments
+    profile="wheelchair"              # 15 calibrated profiles
 )
 
-print(f"Distance: {route.total_distance_m:.1f} m")
-print(f"Travel Time: {route.total_time_sec / 60:.1f} min")
-print(f"Cumulative Ascent: {route.elevation_gain_m:.1f} m")
+print(f"Distance: {route.statistics.total_distance_km:.2f} km")
+print(f"Duration: {route.statistics.total_duration_min:.1f} min")
+print(f"Climb: +{route.statistics.elevation_gain_m:.1f} m")
+
+# Save or display interactive 3D WebGL Cockpit
+route.to_html("route_viewer.html")
+
+# Plot publication-grade elevation & metabolic energy profile with Matplotlib
+route.plot(show_energy=True, save_path="profile.png")
+
+# Convert to 3D LineStringZ GeoDataFrame for GIS workflows
+gdf = route.to_geodataframe()
 ```
 
-### 3. Multi-Objective 4D Pareto Frontier (NAMOA*)
+### 2. Multi-Objective 4D Pareto Frontier (NAMOA*)
 
 ```python
-from zero2route3d import ParetoMultiObjectiveRouter, RoadSegment, get_profile
+import zero2route3d as zr3d
 
-router = ParetoMultiObjectiveRouter()
-router.add_segment(RoadSegment("e1", (27.10, 38.40, 5.0), (27.12, 38.42, 35.0), length_m=400.0))
-
-profile = get_profile("commuter_bike")
-result = router.solve_pareto_frontier(
-    start_pt=(27.10, 38.40, 5.0),
-    end_pt=(27.12, 38.42, 35.0),
-    profile=profile
+pareto_result = zr3d.solve_4d_pareto_frontier(
+    origin=(27.11, 38.41),
+    destination=(27.14, 38.44),
+    network="izmir_network.geojson",
+    profile="commuter_bike"
 )
 
-for sol in result.solutions:
-    print(f"Solution: Time={sol.costs.time_sec:.1f}s, Climb={sol.costs.climb_m:.1f}m, Heat={sol.costs.heat_dose:.1f}, Calories={sol.costs.calories_kcal:.1f} kcal")
+for idx, sol in enumerate(pareto_result.solutions, start=1):
+    print(f"Solution #{idx}: Time={sol.costs.time_sec/60:.1f}m, Climb={sol.costs.climb_m:.1f}m, Calories={sol.costs.calories_kcal:.0f}kcal")
+
+# Plot 2D Pareto trade-off curve
+zr3d.plot_pareto_frontier_2d(pareto_result, save_path="pareto_curve.png")
 ```
 
-### 4. 3D GPS Map Matching (HMM Viterbi)
+### 3. GeoPandas & NetworkX Ecosystem Bridges
 
 ```python
-from zero2route3d import HMMMapMatcher3D, GPXPoint, RoadSegment
+from zero2route3d import to_geodataframe, to_networkx_digraph, from_geodataframe
+import geopandas as gpd
 
-matcher = HMMMapMatcher3D(gps_sigma=8.0, beta=5.0)
-matcher.add_segment(RoadSegment("main_st", (27.10, 38.40, 10.0), (27.12, 38.40, 12.0), length_m=200.0))
+# Load standard GeoDataFrame of road centerlines
+gdf = gpd.read_file("streets.geojson")
 
-raw_gps = [
-    GPXPoint(lon=27.1001, lat=38.4002, elevation=10.5, timestamp=0.0),
-    GPXPoint(lon=27.1102, lat=38.4001, elevation=11.0, timestamp=30.0),
-    GPXPoint(lon=27.1198, lat=38.3999, elevation=12.2, timestamp=60.0),
-]
+# Convert GeoDataFrame into 3D RoadSegment graph
+segments = from_geodataframe(gdf)
 
-match_result = matcher.match_track(raw_gps)
-print(f"Matched points: {len(match_result.matched_points)}, Mean confidence: {match_result.mean_confidence:.2f}")
+# Convert 3D routing graph into NetworkX DiGraph with slope & kinematic weights
+nx_digraph = to_networkx_digraph(segments)
+```
+
+### 4. Command Line Interface (CLI)
+
+```bash
+# Inspect all 15 mobility profiles
+zero2route3d profiles
+
+# Run headless 3D route calculation from terminal
+zero2route3d route --origin 27.11,38.41 --dest 27.14,38.44 --network streets.geojson --profile wheelchair --out-geojson route.geojson --out-dxf route.dxf --out-html viewer.html
+
+# Compute 3D travel time isochrone bands
+zero2route3d isochrone --center 27.12,38.42 --intervals 5,10,15 --network streets.geojson --out-geojson isochrones.geojson
 ```
 
 ---

@@ -5,7 +5,8 @@ from __future__ import annotations
 import heapq
 import math
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Sequence, Tuple
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
 
 from .environmental_raster import EnvironmentalSurfaceSampler, MCDAWeights
 from .input_validation import deduplicate_adjacent_coordinates, validate_waypoint_coordinates
@@ -125,6 +126,50 @@ class RouteResult3D:
     </trkseg>
   </trk>
 </gpx>"""
+
+    def to_html(self, filepath: Optional[Union[str, Path]] = None) -> str:
+        """Export or save an interactive Three.js 60 FPS WebGL 3D Cockpit HTML bundle."""
+        from .html_bundler import StandaloneHtmlBundler
+
+        bundler = StandaloneHtmlBundler()
+        feature = self.to_geojson_feature()
+        if filepath is not None:
+            bundler.bundle_to_file(feature, filepath)
+        return bundler.bundle(feature)
+
+    def _repr_html_(self) -> str:
+        """Rich HTML display for Jupyter Notebook and Google Colab cells."""
+        stats = self.statistics
+        return f"""<div style="font-family: system-ui, -apple-system, sans-serif; border: 1px solid #cbd5e1; border-radius: 8px; padding: 16px; background: #0f172a; color: #f8fafc; max-width: 600px;">
+  <div style="font-size: 16px; font-weight: 700; margin-bottom: 8px; color: #38bdf8;">🛣️ 02Route 3D — {self.profile.name}</div>
+  <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 12px;">
+    <div style="background: #1e293b; padding: 8px; border-radius: 6px;"><span style="font-size: 11px; color: #94a3b8;">Distance</span><br><strong style="font-size: 14px; color: #38bdf8;">{stats.total_distance_km:.2f} km</strong></div>
+    <div style="background: #1e293b; padding: 8px; border-radius: 6px;"><span style="font-size: 11px; color: #94a3b8;">Duration</span><br><strong style="font-size: 14px; color: #38bdf8;">{stats.total_duration_min:.1f} min</strong></div>
+    <div style="background: #1e293b; padding: 8px; border-radius: 6px;"><span style="font-size: 11px; color: #94a3b8;">Climb</span><br><strong style="font-size: 14px; color: #4ade80;">+{stats.elevation_gain_m:.1f} m</strong></div>
+    <div style="background: #1e293b; padding: 8px; border-radius: 6px;"><span style="font-size: 11px; color: #94a3b8;">Max Slope</span><br><strong style="font-size: 14px; color: #facc15;">{stats.max_slope_pct:.1f}%</strong></div>
+    <div style="background: #1e293b; padding: 8px; border-radius: 6px;"><span style="font-size: 11px; color: #94a3b8;">Calories</span><br><strong style="font-size: 14px; color: #fb923c;">{stats.total_calories_kcal:.0f} kcal</strong></div>
+    <div style="background: #1e293b; padding: 8px; border-radius: 6px;"><span style="font-size: 11px; color: #94a3b8;">ADA Compliant</span><br><strong style="font-size: 14px; color: {"#4ade80" if stats.ada_compliant else "#f87171"};">{"Yes" if stats.ada_compliant else "No"}</strong></div>
+  </div>
+  <div style="font-size: 11px; color: #94a3b8;">3D Coordinates: {len(self.coordinates_3d)} points | Call <code>route.to_html('viewer.html')</code> for WebGL cockpit.</div>
+</div>"""
+
+    def to_dxf(self, filepath: Union[str, Path]) -> None:
+        """Export 3D AutoCAD DXF file with 3D Polylines and elevation profile."""
+        from .profile_dxf import export_route_to_dxf_3d
+
+        export_route_to_dxf_3d(self.coordinates_3d, filepath)
+
+    def to_geodataframe(self) -> Any:
+        """Convert route to a geopandas.GeoDataFrame with 3D LineString geometry."""
+        from .integrations import to_geodataframe
+
+        return to_geodataframe(self)
+
+    def plot(self, show_energy: bool = True, save_path: Optional[str] = None) -> Any:
+        """Plot publication-ready longitudinal elevation profile with matplotlib."""
+        from .plotting import plot_elevation_profile
+
+        return plot_elevation_profile(self, show_energy=show_energy, save_path=save_path)
 
 
 class RoutingEngine3D:

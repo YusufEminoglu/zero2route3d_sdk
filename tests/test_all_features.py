@@ -460,6 +460,69 @@ class TestZero2Route3DSDK(unittest.TestCase):
         reimported = from_geodataframe(gdf)
         self.assertEqual(len(reimported), len(segments))
 
+    def test_route_result_interactive_helpers(self) -> None:
+        from zero2route3d import solve_3d_route
+
+        segments = fixture_network_segments()
+        route = solve_3d_route((27.11, 38.41), (27.14, 38.44), network=segments, profile="adult")
+
+        # HTML repr for Jupyter
+        html_repr = route._repr_html_()
+        self.assertIn("02Route 3D", html_repr)
+        self.assertIn("Distance", html_repr)
+
+        # Standalone HTML bundle
+        html_str = route.to_html()
+        self.assertIn("02Route 3D Studio", html_str)
+
+        # GeoDataFrame conversion directly on route
+        gdf_route = route.to_geodataframe()
+        self.assertEqual(len(gdf_route), 1)
+
+    def test_scientific_plots(self) -> None:
+        from zero2route3d import (
+            AccessibilityEquityEngine,
+            SupplyFacility,
+            ZoneAccessibilityRecord,
+            plot_elevation_profile,
+            plot_lorenz_equity_curve,
+            plot_pareto_frontier_2d,
+            solve_3d_route,
+            solve_4d_pareto_frontier,
+        )
+
+        segments = fixture_network_segments()
+        route = solve_3d_route((27.11, 38.41), (27.14, 38.44), network=segments, profile="adult")
+
+        with tempfile.TemporaryDirectory() as td:
+            # Elevation profile plot
+            p_png = Path(td) / "profile.png"
+            fig1 = plot_elevation_profile(route, save_path=str(p_png))
+            self.assertIsNotNone(fig1)
+            self.assertTrue(p_png.exists())
+
+            # Pareto plot
+            pareto_res = solve_4d_pareto_frontier(
+                (27.11, 38.41), (27.14, 38.44), network=segments, profile="adult"
+            )
+            p_pareto = Path(td) / "pareto.png"
+            fig2 = plot_pareto_frontier_2d(pareto_res, save_path=str(p_pareto))
+            self.assertIsNotNone(fig2)
+            self.assertTrue(p_pareto.exists())
+
+            # Lorenz curve plot
+            eq_engine = AccessibilityEquityEngine(catchment_radius_m=3000.0)
+            zones = [
+                ZoneAccessibilityRecord("z1", "Z1", 27.12, 38.42, 1000),
+                ZoneAccessibilityRecord("z2", "Z2", 27.14, 38.44, 2000),
+            ]
+            facs = [SupplyFacility("f1", "F1", 27.125, 38.425, 50)]
+            eq_res = eq_engine.compute_e2sfca(zones, facs)
+            p_lorenz = Path(td) / "lorenz.png"
+            fig3 = plot_lorenz_equity_curve(eq_res, save_path=str(p_lorenz))
+            self.assertIsNotNone(fig3)
+            self.assertTrue(p_lorenz.exists())
+
 
 if __name__ == "__main__":
     unittest.main()
