@@ -31,7 +31,7 @@ jobs:
     - name: Install package with dev dependencies
       run: |
         python -m pip install --upgrade pip
-        python -m pip install -e ".[dev]"
+        python -m pip install -e ".[dev,geo]"
     - name: Run tests with coverage
       run: python -m pytest tests/ -v -W error --cov=zero2route3d --cov-report=term-missing
 
@@ -48,7 +48,7 @@ jobs:
     - name: Install package with dev dependencies
       run: |
         python -m pip install --upgrade pip
-        python -m pip install -e ".[dev]"
+        python -m pip install -e ".[dev,geo]"
     - name: Ruff (lint)
       run: python -m ruff check .
     - name: Ruff (format check)
