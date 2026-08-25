@@ -59,7 +59,7 @@ window.MathJax = {
   --fg-heading: #ffffff;
   --muted: #9ca3af;
   --dim: #6b7280;
-  
+
   --accent: #10b981;
   --accent-dark: #059669;
   --accent-light: rgba(16, 185, 129, 0.12);
@@ -68,16 +68,16 @@ window.MathJax = {
   --accent-indigo: #6366f1;
   --accent-amber: #f59e0b;
   --accent-rose: #f43f5e;
-  
+
   --border: #1f2937;
   --border-subtle: #374151;
   --code-bg: #0d1117;
   --sidebar-active: rgba(16, 185, 129, 0.15);
   --table-stripe: #141d2e;
-  
+
   --gradient-brand: linear-gradient(135deg, #10b981 0%, #06b6d4 50%, #3b82f6 100%);
   --shadow-card: 0 4px 20px -2px rgba(0, 0, 0, 0.5);
-  
+
   font-size: 14.5px;
   line-height: 1.68;
 }
@@ -90,11 +90,11 @@ window.MathJax = {
   --fg-heading: #0f172a;
   --muted: #475569;
   --dim: #64748b;
-  
+
   --accent: #059669;
   --accent-dark: #047857;
   --accent-light: #d1fae5;
-  
+
   --border: #e2e8f0;
   --border-subtle: #cbd5e1;
   --code-bg: #0f172a;
@@ -716,7 +716,7 @@ tr:nth-child(even) td {
     <div class="sandbox-badge"><i data-lucide="activity" style="width:12px;height:12px;margin-right:4px;"></i> Live Biomechanical Simulator</div>
     <h3 style="margin-top:0;">Tobler Walking Speed & Minetti Metabolic Cost Calculator</h3>
     <p style="font-size:0.88rem;color:var(--muted);">Adjust terrain slope gradient $s$, pedestrian mass $m$, and base speed to simulate instant physiological walking speed $W(s)$ and metabolic energy expenditure $C(s)$:</p>
-    
+
     <div class="sandbox-grid">
       <div>
         <div class="control-item">
@@ -783,7 +783,7 @@ zero2route3d isochrone --center 27.12,38.42 --intervals 5,10,15 --network street
 
   <h3>Tobler's Hiking Function (1993)</h3>
   <p>Waldo Tobler's empirical formula determines walking speed $W$ (in $km/h$) as an exponential function of terrain slope $s = \frac{dz}{dx}$ (vertical rise over horizontal run):</p>
-  
+
   $$\text{Tobler Speed: } W(s) = 6.0 \cdot \exp\left(-3.5 \cdot |s + 0.05|\right)$$
 
   <p>Maximum walking velocity ($6.0 \text{ km/h}$) is achieved on a gentle downhill gradient of $-5.0\%$. Ascents and steep descents exponentially reduce walking velocity to maintain human postural stability.</p>
@@ -1115,7 +1115,7 @@ const search = document.getElementById("search");
 search.addEventListener("input", function(e) {
   const q = e.target.value.toLowerCase().trim();
   const algLinks = document.querySelectorAll(".toc-algs li a");
-  
+
   algLinks.forEach(link => {
     const text = (link.getAttribute("data-display") || link.innerText).toLowerCase();
     const li = link.closest("li");
@@ -1149,17 +1149,17 @@ function updateBiomechanics() {
   const s_pct = parseFloat(slopeSlider.value);
   const m = parseFloat(massSlider.value);
   const v0 = parseFloat(speedSlider.value);
-  
+
   slopeVal.innerText = `${s_pct >= 0 ? '+' : ''}${s_pct.toFixed(1)}%`;
   massVal.innerText = `${m} kg`;
   speedVal.innerText = `${v0.toFixed(1)} km/h`;
-  
+
   // Tobler walking speed: W(s) = 6.0 * exp(-3.5 * |s + 0.05|)
   const s = s_pct / 100.0;
   const tobler_speed = 6.0 * Math.exp(-3.5 * Math.abs(s + 0.05));
   const scale = v0 / 5.0;
   const final_speed = tobler_speed * scale;
-  
+
   // Minetti energy cost: J / (kg * m)
   // C(s) = 280.5 s^5 - 58.7 s^4 - 289.8 s^3 + 33.3 s^2 + 40.4 s + 3.6
   const s2 = s * s;
@@ -1168,11 +1168,11 @@ function updateBiomechanics() {
   const s5 = s4 * s;
   let minetti_cost = (280.5 * s5) - (58.7 * s4) - (289.8 * s3) + (33.3 * s2) + (40.4 * s) + 3.6;
   if (minetti_cost < 2.0) minetti_cost = 2.0;
-  
+
   // kcal per min: C(s) [J/kg/m] * m [kg] * v [m/s] / 4184 [J/kcal] * 60 [s/min]
   const v_ms = final_speed / 3.6;
   const kcal_per_min = (minetti_cost * m * v_ms / 4184.0) * 60.0;
-  
+
   toblerResult.innerText = `${final_speed.toFixed(2)} km/h`;
   energyResult.innerHTML = `${minetti_cost.toFixed(2)} J/(kg&middot;m) &middot; ${kcal_per_min.toFixed(1)} kcal/min`;
 }

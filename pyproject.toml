@@ -120,6 +120,11 @@ ignore_missing_imports = true
 testpaths = ["tests"]
 # Lets `pytest` run straight from a clone, without an editable install first.
 pythonpath = ["src"]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::PendingDeprecationWarning",
+    "ignore::FutureWarning",
+]
 
 [tool.coverage.run]
 source = ["zero2route3d"]

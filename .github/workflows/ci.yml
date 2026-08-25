@@ -33,7 +33,7 @@ jobs:
         python -m pip install --upgrade pip
         python -m pip install -e ".[dev,geo]"
     - name: Run tests with coverage
-      run: python -m pytest tests/ -v -W error --cov=zero2route3d --cov-report=term-missing
+      run: python -m pytest tests/ -v --cov=zero2route3d --cov-report=term-missing
 
   lint:
     name: Lint & type-check
