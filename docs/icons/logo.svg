@@ -38,5 +38,5 @@
 
   <!-- Badge -->
   <rect x="156" y="405" width="200" height="42" rx="21" fill="#0f172a" stroke="url(#glow)" stroke-width="3"/>
-  <text x="256" y="432" font-family="'Plus Jakarta Sans', 'Inter', sans-serif" font-size="17" font-weight="800" fill="#fb7185" text-anchor="middle" letter-spacing="1.5">3D &middot; KINEMATICS</text>
+  <text x="256" y="432" font-family="'Plus Jakarta Sans', 'Inter', sans-serif" font-size="17" font-weight="800" fill="#fb7185" text-anchor="middle" letter-spacing="1.5">3D &#183; KINEMATICS</text>
 </svg>
