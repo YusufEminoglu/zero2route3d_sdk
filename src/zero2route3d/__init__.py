@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 __author__ = "Yusuf Eminoğlu"
 __email__ = "yusufeminoglu@gmail.com"
 
@@ -21,6 +21,7 @@ from .api import (
 )
 from .basemap import add_osm_basemap
 from .copernicus_dem import CopernicusDemError, CopernicusDemTileSource
+from .dem_fetcher import NODATA, GlobalDemFetcher
 from .environmental_raster import EnvironmentalSurfaceSampler, MCDAWeights
 from .evacuation import EvacuationPlan, EvacuationRouter, HazardZone
 from .html_bundler import StandaloneHtmlBundler
@@ -60,11 +61,16 @@ from .micro_elevation import (
     SurfaceGradient3D,
 )
 from .mobility_profiles import (
+    PROFILE_CATEGORIES,
     PROFILES,
     MobilityProfile,
+    UnknownProfileError,
     get_profile,
+    get_profile_color,
     list_profile_keys,
+    list_profile_keys_for_group,
     load_custom_profile_json,
+    resolve_profile,
     save_custom_profile_json,
 )
 from .multimodal import MultiModalJourney, MultiModalLeg, MultiModalRouter
@@ -91,6 +97,7 @@ from .profile_stats import (
     smooth_elevation_series,
 )
 from .qml_generator import generate_route_qml_style
+from .raster_source import GeoTiffRasterSource, RasterSourceError
 from .report_generator import generate_analytical_report_html
 from .route_corridor_3d import filter_buildings_in_corridor
 from .routing_engine import RouteResult3D, RoutingEngine3D, Waypoint
@@ -127,6 +134,10 @@ __all__ = [
     "plot_lorenz_equity_curve",
     "CopernicusDemError",
     "CopernicusDemTileSource",
+    "GlobalDemFetcher",
+    "GeoTiffRasterSource",
+    "RasterSourceError",
+    "NODATA",
     "EnvironmentalSurfaceSampler",
     "MCDAWeights",
     "EvacuationPlan",
@@ -172,9 +183,14 @@ __all__ = [
     "universal_thermal_comfort_utci",
     "vehicle_free_flow_speed",
     "PROFILES",
+    "PROFILE_CATEGORIES",
     "MobilityProfile",
+    "UnknownProfileError",
     "get_profile",
+    "get_profile_color",
     "list_profile_keys",
+    "list_profile_keys_for_group",
+    "resolve_profile",
     "load_custom_profile_json",
     "save_custom_profile_json",
     "NetworkSourceManager",

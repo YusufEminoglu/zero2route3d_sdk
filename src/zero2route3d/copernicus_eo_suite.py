@@ -24,7 +24,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, List, Optional, Sequence, Tuple
 
-from .dem_fetcher import GlobalDemFetcher
+from .dem_fetcher import NODATA, GlobalDemFetcher
 from .kinematics import haversine_distance_2d
 
 
@@ -54,7 +54,7 @@ class CopernicusEOSuite:
     def fetch_and_clip_multispectral_stack(
         cls,
         bbox: Sequence[float],
-        corridor_coords: Optional[Sequence[Tuple[float, float, ...]]] = None,
+        corridor_coords: Optional[Sequence[Sequence[float]]] = None,
         buffer_meters: float = 30.0,
         resolution_deg: float = 0.000277777777778,  # ~30m at equator
     ) -> List[EnvironmentalLayerResult]:
@@ -96,8 +96,13 @@ class CopernicusEOSuite:
         geotransform = (min_lon, res, 0.0, actual_max_lat, 0.0, -res)
         results: List[EnvironmentalLayerResult] = []
 
+        dem_name = (
+            "Corridor Elevation (Open-Elevation 30m)"
+            if (corridor_coords and len(corridor_coords) >= 2)
+            else "Elevation DEM (Open-Elevation 30m)"
+        )
         specs = [
-            ("dem", "Corridor Elevation (Open-Elevation 30m)", dem_grid, "m", "terrain"),
+            ("dem", dem_name, dem_grid, "m", "terrain"),
         ]
 
         # tempfile has no `time` attribute, so the old expression always took the
@@ -107,7 +112,7 @@ class CopernicusEOSuite:
         for key, name, grid, unit, palette in specs:
             file_path = out_dir / f"corridor_{key}_{timestamp}.tif"
             min_v, max_v = cls._write_geotiff(
-                file_path, grid, width, height, geotransform, nodata_val=-9999.0
+                file_path, grid, width, height, geotransform, nodata_val=NODATA
             )
             results.append(
                 EnvironmentalLayerResult(
@@ -134,8 +139,13 @@ class CopernicusEOSuite:
         height: int,
         res: float,
     ) -> List[List[float]]:
-        """Populate DEM grid using official Copernicus COGs or Open-Elevation cache."""
-        grid: List[List[float]] = [[0.0] * width for _ in range(height)]
+        """Populate the elevation grid from the Open-Elevation API and its cache.
+
+        Unresolved samples stay as NoData. Filling them with 0.0 would put a
+        sea-level plateau into the middle of real terrain, indistinguishable from
+        a genuine measurement.
+        """
+        grid: List[List[float]] = [[NODATA] * width for _ in range(height)]
         coords_to_sample: List[Tuple[float, float]] = []
 
         for r in range(height):
@@ -148,7 +158,8 @@ class CopernicusEOSuite:
         idx = 0
         for r in range(height):
             for c in range(width):
-                grid[r][c] = elevations[idx] if idx < len(elevations) else 0.0
+                value = elevations[idx] if idx < len(elevations) else None
+                grid[r][c] = NODATA if value is None else float(value)
                 idx += 1
 
         return grid
@@ -162,7 +173,7 @@ class CopernicusEOSuite:
         res: float,
         width: int,
         height: int,
-        corridor_coords: Sequence[Tuple[float, float, ...]],
+        corridor_coords: Sequence[Sequence[float]],
         buffer_meters: float = 30.0,
     ) -> None:
         """Mask out raster cells that fall outside the corridor buffer (set to NoData)."""
@@ -196,7 +207,7 @@ class CopernicusEOSuite:
 
                 if min_d > max_dist_m:
                     for grid in grids:
-                        grid[r][c] = -9999.0
+                        grid[r][c] = NODATA
 
     @classmethod
     def _write_geotiff(
@@ -206,7 +217,7 @@ class CopernicusEOSuite:
         width: int,
         height: int,
         geotransform: Tuple[float, float, float, float, float, float],
-        nodata_val: float = -9999.0,
+        nodata_val: float = NODATA,
     ) -> Tuple[float, float]:
         """Write 2D float matrix to GeoTIFF using GDAL if available, or pure-Python GeoTIFF writer fallback."""
         try:
@@ -263,7 +274,7 @@ class CopernicusEOSuite:
         width: int,
         height: int,
         geotransform: Tuple[float, float, float, float, float, float],
-        nodata_val: float = -9999.0,
+        nodata_val: float = NODATA,
     ) -> Tuple[float, float]:
         """Pure-Python standard GeoTIFF binary generator for non-GDAL testing environments."""
         import struct

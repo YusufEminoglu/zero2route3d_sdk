@@ -319,13 +319,27 @@ class TestZero2Route3DSDK(unittest.TestCase):
         self.assertAlmostEqual(p_end[0], 27.2)
 
     def test_global_dem_fetcher(self) -> None:
-        pts = [(27.1428, 38.4237), (27.1500, 38.4300)]
-        elevations = GlobalDemFetcher.fetch_elevations_for_coords(pts)
-        self.assertEqual(len(elevations), 2)
-        self.assertGreaterEqual(elevations[0], 0.0)
+        # Network-free and falsifiable: a cache hit must return the seeded value,
+        # a miss must stay None. Asserting ">= 0.0" would also pass on total failure.
+        saved_cache_file = GlobalDemFetcher._CACHE_FILE
+        with tempfile.TemporaryDirectory() as tmpdir:
+            GlobalDemFetcher._CACHE_FILE = Path(tmpdir) / "elevation_cache.json"
+            GlobalDemFetcher.clear_cache()
+            try:
+                GlobalDemFetcher.seed_cache({(27.1428, 38.4237): 42.5, (27.15, 38.43): 61.0})
+                pts = [(27.1428, 38.4237), (27.15, 38.43)]
+                elevations = GlobalDemFetcher.fetch_elevations_for_coords(pts, timeout_sec=1.0)
+                self.assertEqual(len(elevations), 2)
+                self.assertAlmostEqual(elevations[0], 42.5)
+                self.assertAlmostEqual(elevations[1], 61.0)
 
-        single = GlobalDemFetcher.get_elevation_single(27.1428, 38.4237)
-        self.assertGreaterEqual(single, 0.0)
+                single = GlobalDemFetcher.get_elevation_single(27.1428, 38.4237)
+                self.assertAlmostEqual(single, 42.5)
+                # get_fast_elevation is cache-only, so an unseeded point stays unknown.
+                self.assertIsNone(GlobalDemFetcher.get_fast_elevation(-179.9999, -89.9999))
+            finally:
+                GlobalDemFetcher.clear_cache()
+                GlobalDemFetcher._CACHE_FILE = saved_cache_file
 
     def test_dxf_export_edge_cases(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -360,8 +374,11 @@ class TestZero2Route3DSDK(unittest.TestCase):
             bundler.bundle_to_file(geojson_mock, out_html)
             self.assertTrue(out_html.exists())
             content = out_html.read_text(encoding="utf-8")
-            self.assertIn("02Route 3D Studio", content)
+            self.assertIn("02Route 3D", content)
             self.assertIn("27.1428", content)
+            # The report must be genuinely standalone: no external fetches.
+            self.assertNotIn('src="http', content)
+            self.assertNotIn('href="http', content)
 
     def test_solar_shadow_and_exposure_calculator(self) -> None:
         sun_morning = calculate_solar_position(38.4, solar_hour=8.0)
@@ -432,8 +449,15 @@ class TestZero2Route3DSDK(unittest.TestCase):
             exit_code = main(["profiles"])
             out = sys.stdout.getvalue()
             self.assertEqual(exit_code, 0)
-            self.assertIn("Mobility Profiles Catalog", out)
+            self.assertIn("Mobility Profiles", out)
             self.assertIn("wheelchair", out)
+
+            # --category must actually filter, not be parsed and ignored.
+            sys.stdout = io.StringIO()
+            self.assertEqual(main(["profiles", "--category", "micromobility"]), 0)
+            filtered = sys.stdout.getvalue()
+            self.assertIn("bicycle", filtered)
+            self.assertNotIn("wheelchair", filtered)
         finally:
             sys.stdout = saved_stdout
 
@@ -473,7 +497,8 @@ class TestZero2Route3DSDK(unittest.TestCase):
 
         # Standalone HTML bundle
         html_str = route.to_html()
-        self.assertIn("02Route 3D Studio", html_str)
+        self.assertIn("02Route 3D", html_str)
+        self.assertIn("<svg", html_str)
 
         # GeoDataFrame conversion directly on route
         gdf_route = route.to_geodataframe()

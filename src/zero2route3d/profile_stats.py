@@ -589,16 +589,31 @@ def compute_route_statistics(
 
     if dense_pts:
         last_pt = dense_pts[-1]
-        profile_list.append(
-            {
-                "distance_m": round(cumulative_dist, 1),
-                "elevation_m": round(last_pt[2], 1),
-                "slope_pct": 0.0,
-                "speed_kmh": round(base_spd, 1),
-                "lon": round(last_pt[0], 6),
-                "lat": round(last_pt[1], 6),
-            }
-        )
+        last_vertex: Dict[str, Any] = {
+            "distance_m": round(cumulative_dist, 1),
+            "elevation_m": round(last_pt[2], 1),
+            "slope_pct": 0.0,
+            "speed_kmh": round(base_spd, 1),
+            "lon": round(last_pt[0], 6),
+            "lat": round(last_pt[1], 6),
+        }
+        # Without this the final vertex loses its environmental readings, so a
+        # profile chart drops to zero heat/greenery at the destination.
+        if lst_samples and len(lst_samples) >= len(dense_pts):
+            raw_last_lst = lst_samples[-1]
+            if raw_last_lst is not None and math.isfinite(float(raw_last_lst)):
+                last_vertex["lst_normalized"] = round(float(raw_last_lst), 3)
+        elif lst_samples and profile_list and "lst_normalized" in profile_list[-1]:
+            last_vertex["lst_normalized"] = profile_list[-1]["lst_normalized"]
+
+        if green_samples and len(green_samples) >= len(dense_pts):
+            raw_last_green = green_samples[-1]
+            if raw_last_green is not None and math.isfinite(float(raw_last_green)):
+                last_vertex["ndvi_normalized"] = round(float(raw_last_green), 3)
+        elif green_samples and profile_list and "ndvi_normalized" in profile_list[-1]:
+            last_vertex["ndvi_normalized"] = profile_list[-1]["ndvi_normalized"]
+
+        profile_list.append(last_vertex)
 
     avg_slope = (slope_sum / cumulative_dist) if cumulative_dist > 0 else 0.0
     # thermal_comfort_score stays None unless a real LST raster covered the route.

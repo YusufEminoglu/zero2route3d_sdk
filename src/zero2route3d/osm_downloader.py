@@ -9,7 +9,7 @@ import math
 from dataclasses import dataclass
 from typing import List, Optional, Tuple
 
-USER_AGENT = "02Route3D-QGIS-Plugin/0.1.0 (https://github.com/YusufEminoglu/zero2route3d)"
+USER_AGENT = "zero2route3d-sdk (https://github.com/YusufEminoglu/zero2route3d_sdk)"
 DEFAULT_TIMEOUT_S = 30
 
 

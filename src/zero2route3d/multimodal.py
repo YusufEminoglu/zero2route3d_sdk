@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Dict, List, Sequence
+from typing import Any, Dict, List, Sequence, Union
 
 from .kinematics import haversine_distance_2d
-from .mobility_profiles import MobilityProfile, get_profile
+from .mobility_profiles import MobilityProfile, resolve_profile
 from .routing_engine import RouteResult3D, RoutingEngine3D, Waypoint
 
 
@@ -70,9 +70,9 @@ class MultiModalRouter:
         origin: Waypoint,
         destination: Waypoint,
         transit_hubs: Sequence[Waypoint],
-        access_mode: str = "adult",
-        main_mode: str = "bicycle",
-        egress_mode: str = "adult",
+        access_mode: Union[str, MobilityProfile] = "adult",
+        main_mode: Union[str, MobilityProfile] = "bicycle",
+        egress_mode: Union[str, MobilityProfile] = "adult",
     ) -> MultiModalJourney:
         """Calculate a 3-leg journey: Access -> Main Transit/Bike -> Egress."""
         if not transit_hubs or len(transit_hubs) < 2:
@@ -81,7 +81,7 @@ class MultiModalRouter:
             single_leg = MultiModalLeg(
                 leg_index=1,
                 mode_name="Direct Access",
-                profile=get_profile(access_mode),
+                profile=resolve_profile(access_mode),
                 start_point=origin,
                 end_point=destination,
                 route_result=res,
@@ -96,13 +96,17 @@ class MultiModalRouter:
                 transfer_count=0,
             )
 
-        # Select closest transit hub to origin and destination
+        # Select the closest transit hub to the origin, then the closest *other*
+        # hub to the destination. Picking the nearest hub to each end independently
+        # can return the same hub twice, which produced a zero-length main leg that
+        # still charged a transfer penalty.
         hub_access = min(
             transit_hubs,
             key=lambda h: haversine_distance_2d((origin.lon, origin.lat), (h.lon, h.lat)),
         )
+        remaining_hubs = [h for h in transit_hubs if h is not hub_access]
         hub_egress = min(
-            transit_hubs,
+            remaining_hubs,
             key=lambda h: haversine_distance_2d((destination.lon, destination.lat), (h.lon, h.lat)),
         )
 
@@ -114,7 +118,7 @@ class MultiModalRouter:
             MultiModalLeg(
                 1,
                 "Access Walk",
-                get_profile(access_mode),
+                resolve_profile(access_mode),
                 origin,
                 hub_access,
                 res1,
@@ -128,7 +132,7 @@ class MultiModalRouter:
             MultiModalLeg(
                 2,
                 "Transit / Bike Ride",
-                get_profile(main_mode),
+                resolve_profile(main_mode),
                 hub_access,
                 hub_egress,
                 res2,
@@ -142,7 +146,7 @@ class MultiModalRouter:
             MultiModalLeg(
                 3,
                 "Egress Walk",
-                get_profile(egress_mode),
+                resolve_profile(egress_mode),
                 hub_egress,
                 destination,
                 res3,

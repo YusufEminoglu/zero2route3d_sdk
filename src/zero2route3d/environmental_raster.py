@@ -2,6 +2,9 @@
 
 Supports sampling digital elevation models (DEM), slope/aspect derivation,
 solar irradiance, Land Surface Temperature (LST), and tree canopy/greenery indices.
+
+Rasters may be supplied either as QGIS raster layers (when running inside QGIS)
+or, headless, as GeoTIFF file paths -- see :class:`EnvironmentalSurfaceSampler`.
 """
 
 from __future__ import annotations
@@ -9,9 +12,13 @@ from __future__ import annotations
 import contextlib
 import math
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Sequence, Tuple
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
 
 from .kinematics import haversine_distance_2d, solar_irradiance_aspect_factor
+from .raster_source import GeoTiffRasterSource, open_raster_source
+
+RasterInput = Union[str, Path, GeoTiffRasterSource, Any]
 
 
 @dataclass
@@ -82,81 +89,166 @@ class MCDAWeights:
 
 
 class EnvironmentalSurfaceSampler:
-    """Samples environmental parameters from active QGIS raster layers or real cached data."""
+    """Samples environmental parameters from GeoTIFF files or QGIS raster layers.
+
+    Every raster argument accepts either a GeoTIFF path (headless, via rasterio)
+    or a live QGIS raster layer. Paths are the normal choice for SDK use::
+
+        sampler = EnvironmentalSurfaceSampler(dem="izmir_dem.tif", lst="lst.tif")
+
+    When no DEM is configured at all, :meth:`sample_elevation` falls back to the
+    :class:`~zero2route3d.dem_fetcher.GlobalDemFetcher` cache and returns None for
+    points it has never seen. Call :meth:`prefetch_elevations` to fill that cache
+    from Open-Elevation in one batched request.
+    """
 
     def __init__(
         self,
-        dem_layer: Optional[Any] = None,
-        dem_layers: Optional[Sequence[Any]] = None,
-        lst_layer: Optional[Any] = None,
-        green_layer: Optional[Any] = None,
-        additional_layers: Optional[Sequence[Any]] = None,
+        dem_layer: Optional[RasterInput] = None,
+        dem_layers: Optional[Sequence[RasterInput]] = None,
+        lst_layer: Optional[RasterInput] = None,
+        green_layer: Optional[RasterInput] = None,
+        additional_layers: Optional[Sequence[RasterInput]] = None,
         sun_azimuth_deg: float = 180.0,
         sun_elevation_deg: float = 55.0,
         weights: Optional[MCDAWeights] = None,
+        dem: Optional[RasterInput] = None,
+        lst: Optional[RasterInput] = None,
+        green: Optional[RasterInput] = None,
+        lst_range_c: Tuple[float, float] = (20.0, 50.0),
     ) -> None:
-        self.dem_layer = dem_layer
-        self.dem_layers: List[Any] = list(dem_layers or [])
-        if dem_layer is not None and dem_layer not in self.dem_layers:
-            self.dem_layers.insert(0, dem_layer)
-        self.lst_layer = lst_layer
-        self.green_layer = green_layer
-        self.additional_layers: List[Any] = list(additional_layers or [])
+        dem_layer = dem if dem is not None else dem_layer
+        lst_layer = lst if lst is not None else lst_layer
+        green_layer = green if green is not None else green_layer
+
+        self.dem_layer = self._coerce_raster(dem_layer)
+        self.dem_layers: List[Any] = [
+            self._coerce_raster(layer) for layer in (dem_layers or []) if layer is not None
+        ]
+        if self.dem_layer is not None and self.dem_layer not in self.dem_layers:
+            self.dem_layers.insert(0, self.dem_layer)
+        self.lst_layer = self._coerce_raster(lst_layer)
+        self.green_layer = self._coerce_raster(green_layer)
+        self.additional_layers: List[Any] = [
+            self._coerce_raster(layer) for layer in (additional_layers or []) if layer is not None
+        ]
         self.sun_azimuth_deg = sun_azimuth_deg if math.isfinite(sun_azimuth_deg) else 180.0
         self.sun_elevation_deg = sun_elevation_deg if math.isfinite(sun_elevation_deg) else 55.0
         self.weights = weights or MCDAWeights()
-        self._dem_cache: Dict[Tuple[float, float], float] = {}
-        self._lst_cache: Dict[Tuple[float, float], float] = {}
-        self._green_cache: Dict[Tuple[float, float], float] = {}
+        low_c, high_c = float(lst_range_c[0]), float(lst_range_c[1])
+        self.lst_range_c: Tuple[float, float] = (
+            (low_c, high_c)
+            if math.isfinite(low_c) and math.isfinite(high_c) and high_c > low_c
+            else (20.0, 50.0)
+        )
+        self._dem_cache: Dict[Tuple[float, float], Optional[float]] = {}
+        self._lst_cache: Dict[Tuple[float, float], Optional[float]] = {}
+        self._green_cache: Dict[Tuple[float, float], Optional[float]] = {}
         self._additional_range_cache: Dict[str, Tuple[float, float]] = {}
 
-    def set_additional_layers(self, layers: Sequence[Any]) -> None:
+    @staticmethod
+    def _coerce_raster(source: Optional[RasterInput]) -> Any:
+        """Wrap GeoTIFF paths in a GeoTiffRasterSource; pass QGIS layers straight through."""
+        coerced = open_raster_source(source)
+        return coerced if coerced is not None else source
+
+    @staticmethod
+    def _sample_raster(layer: Any, lon: float, lat: float) -> Optional[float]:
+        """Sample one raster at a WGS84 coordinate, whichever kind of raster it is."""
+        if layer is None:
+            return None
+
+        if isinstance(layer, GeoTiffRasterSource):
+            try:
+                return layer.sample(lon, lat)
+            except Exception:
+                return None
+
+        with contextlib.suppress(Exception):
+            from qgis.core import (
+                QgsCoordinateReferenceSystem,
+                QgsCoordinateTransform,
+                QgsPointXY,
+                QgsProject,
+            )
+
+            pt = QgsPointXY(lon, lat)
+            crs_src = QgsCoordinateReferenceSystem("EPSG:4326")
+            crs_dest = layer.crs()
+            if crs_src != crs_dest:
+                transform = QgsCoordinateTransform(crs_src, crs_dest, QgsProject.instance())
+                pt = transform.transform(pt)
+
+            val, success = layer.dataProvider().sample(pt, 1)
+            if success and val is not None and math.isfinite(val) and val > -9999:
+                return float(val)
+        return None
+
+    def set_additional_layers(self, layers: Sequence[RasterInput]) -> None:
         """Replace the unlimited MCDA raster stack without rebuilding the sampler."""
-        self.additional_layers = [layer for layer in layers if layer is not None]
+        self.additional_layers = [
+            self._coerce_raster(layer) for layer in layers if layer is not None
+        ]
         self._additional_range_cache.clear()
 
-    def sample_elevation(self, lon: float, lat: float) -> float:
-        """Sample elevation in meters at given WGS84 coordinate."""
+    @property
+    def has_elevation_source(self) -> bool:
+        """True when at least one DEM raster is configured on this sampler."""
+        return bool(self.dem_layers)
+
+    def prefetch_elevations(
+        self,
+        coords: Sequence[Tuple[float, float]],
+        timeout_sec: float = 10.0,
+    ) -> int:
+        """Fill the elevation cache for many coordinates in one Open-Elevation request.
+
+        Only meaningful when no DEM raster is configured. Returns the number of
+        points that were resolved. Requires network access; unresolved points stay
+        unknown rather than silently becoming sea level.
+        """
+        if self.has_elevation_source or not coords:
+            return 0
+        from .dem_fetcher import GlobalDemFetcher
+
+        values = GlobalDemFetcher.fetch_elevations_for_coords(coords, timeout_sec=timeout_sec)
+        resolved = 0
+        for (lon, lat), value in zip(coords, values):
+            if value is None:
+                continue
+            self._dem_cache[(round(lon, 5), round(lat, 5))] = float(value)
+            resolved += 1
+        return resolved
+
+    def sample_elevation(self, lon: float, lat: float) -> Optional[float]:
+        """Sample elevation in metres at a WGS84 coordinate, or None if unknown.
+
+        Returns None -- not 0.0 -- when no DEM covers the point. Zero is a valid
+        elevation, so substituting it silently flattens terrain: slopes computed
+        against real neighbours become cliffs, and a whole network with no DEM
+        looks perfectly flat and therefore fully ADA-compliant.
+        """
         if not math.isfinite(lon) or not math.isfinite(lat):
-            return 0.0
+            return None
 
         coord_key = (round(lon, 5), round(lat, 5))
         if coord_key in self._dem_cache:
             return self._dem_cache[coord_key]
 
-        elevation = 0.0
-
         for dem_layer in self.dem_layers:
-            with contextlib.suppress(Exception):
-                from qgis.core import (
-                    QgsCoordinateReferenceSystem,
-                    QgsCoordinateTransform,
-                    QgsPointXY,
-                    QgsProject,
-                )
+            elevation = self._sample_raster(dem_layer, lon, lat)
+            if elevation is not None:
+                self._dem_cache[coord_key] = elevation
+                return elevation
 
-                pt = QgsPointXY(lon, lat)
-                crs_src = QgsCoordinateReferenceSystem("EPSG:4326")
-                crs_dest = dem_layer.crs()
-                if crs_src != crs_dest:
-                    transform = QgsCoordinateTransform(crs_src, crs_dest, QgsProject.instance())
-                    pt = transform.transform(pt)
-
-                val, success = dem_layer.dataProvider().sample(pt, 1)
-                if success and val is not None and math.isfinite(val) and val > -9999:
-                    elevation = float(val)
-                    self._dem_cache[coord_key] = elevation
-                    return elevation
-
-        # Fast zero-latency cached elevation.  A missing DEM is represented by
-        # zero and must not be mistaken for a generated terrain surface.
+        # Fall back to the cached Open-Elevation samples; None stays None.
         from .dem_fetcher import GlobalDemFetcher
 
-        elevation = GlobalDemFetcher.get_fast_elevation(lon, lat)
-        if not math.isfinite(elevation):
-            elevation = 0.0
-        self._dem_cache[coord_key] = elevation
-        return elevation
+        cached = GlobalDemFetcher.get_fast_elevation(lon, lat)
+        if cached is not None and not math.isfinite(cached):
+            cached = None
+        self._dem_cache[coord_key] = cached
+        return cached
 
     def sample_slope_and_aspect(
         self,
@@ -191,6 +283,10 @@ class EnvironmentalSurfaceSampler:
             if len(p2) > 2 and math.isfinite(float(p2[2]))
             else self.sample_elevation(lon2, lat2)
         )
+        if z1 is None or z2 is None:
+            # No elevation data here: report a flat, zero-slope segment with a
+            # neutral solar factor rather than inventing a gradient.
+            return 0.0, 0.0, 1.0
 
         dz = z2 - z1
         if not math.isfinite(dz):
@@ -218,6 +314,9 @@ class EnvironmentalSurfaceSampler:
     def sample_lst(self, lon: float, lat: float) -> Optional[float]:
         """Sample Land Surface Temperature (normalized 0.0 = cool, 1.0 = hot).
 
+        Raw raster values are read as degrees Celsius and rescaled with the
+        ``lst_range_c`` window given to the constructor (20-50 C by default).
+
         Returns None when no LST raster is configured or the point cannot be
         sampled. Callers must treat None as "no data" and drop the criterion --
         never as an average value, which would fabricate a thermal surface.
@@ -229,33 +328,20 @@ class EnvironmentalSurfaceSampler:
         if coord_key in self._lst_cache:
             return self._lst_cache[coord_key]
 
-        if self.lst_layer is not None:
-            with contextlib.suppress(Exception):
-                from qgis.core import (
-                    QgsCoordinateReferenceSystem,
-                    QgsCoordinateTransform,
-                    QgsPointXY,
-                    QgsProject,
-                )
+        normalized: Optional[float] = None
+        raw = self._sample_raster(self.lst_layer, lon, lat)
+        if raw is not None:
+            low_c, high_c = self.lst_range_c
+            normalized = max(0.0, min(1.0, (raw - low_c) / (high_c - low_c)))
 
-                pt = QgsPointXY(lon, lat)
-                crs_src = QgsCoordinateReferenceSystem("EPSG:4326")
-                crs_dest = self.lst_layer.crs()
-                if crs_src != crs_dest:
-                    transform = QgsCoordinateTransform(crs_src, crs_dest, QgsProject.instance())
-                    pt = transform.transform(pt)
-
-                val, success = self.lst_layer.dataProvider().sample(pt, 1)
-                if success and val is not None and math.isfinite(val):
-                    normalized = (float(val) - 20.0) / 30.0
-                    normalized = max(0.0, min(1.0, normalized))
-                    self._lst_cache[coord_key] = normalized
-                    return normalized
-        self._lst_cache[coord_key] = None
-        return None
+        self._lst_cache[coord_key] = normalized
+        return normalized
 
     def sample_greenery(self, lon: float, lat: float) -> Optional[float]:
         """Sample green tree canopy / NDVI (0.0 = bare/concrete, 1.0 = lush canopy).
+
+        NDVI rasters in the native -1..1 range are rescaled to 0..1; rasters
+        already stored as 0..1 fractions pass through unchanged.
 
         Returns None when no greenery raster is configured -- see sample_lst.
         """
@@ -266,29 +352,14 @@ class EnvironmentalSurfaceSampler:
         if coord_key in self._green_cache:
             return self._green_cache[coord_key]
 
-        if self.green_layer is not None:
-            with contextlib.suppress(Exception):
-                from qgis.core import (
-                    QgsCoordinateReferenceSystem,
-                    QgsCoordinateTransform,
-                    QgsPointXY,
-                    QgsProject,
-                )
+        normalized: Optional[float] = None
+        raw = self._sample_raster(self.green_layer, lon, lat)
+        if raw is not None:
+            # NDVI is defined on -1..1; anything below zero is water or bare rock.
+            normalized = max(0.0, min(1.0, raw))
 
-                pt = QgsPointXY(lon, lat)
-                crs_src = QgsCoordinateReferenceSystem("EPSG:4326")
-                crs_dest = self.green_layer.crs()
-                if crs_src != crs_dest:
-                    transform = QgsCoordinateTransform(crs_src, crs_dest, QgsProject.instance())
-                    pt = transform.transform(pt)
-
-                val, success = self.green_layer.dataProvider().sample(pt, 1)
-                if success and val is not None and math.isfinite(val):
-                    normalized = max(0.0, min(1.0, float(val)))
-                    self._green_cache[coord_key] = normalized
-                    return normalized
-        self._green_cache[coord_key] = None
-        return None
+        self._green_cache[coord_key] = normalized
+        return normalized
 
     def _additional_layer_range(self, layer: Any) -> Optional[Tuple[float, float]]:
         """Read a raster's real min/max statistics once for normalization."""
@@ -298,6 +369,15 @@ class EnvironmentalSurfaceSampler:
             layer_id = str(id(layer))
         if layer_id in self._additional_range_cache:
             return self._additional_range_cache[layer_id]
+
+        if isinstance(layer, GeoTiffRasterSource):
+            with contextlib.suppress(Exception):
+                value_range = layer.value_range()
+                if value_range is not None:
+                    self._additional_range_cache[layer_id] = value_range
+                    return value_range
+            return None
+
         with contextlib.suppress(Exception):
             from qgis.core import QgsRasterBandStats
 
@@ -320,33 +400,12 @@ class EnvironmentalSurfaceSampler:
             return []
         values: List[float] = []
         for layer in self.additional_layers:
-            with contextlib.suppress(Exception):
-                from qgis.core import (
-                    QgsCoordinateReferenceSystem,
-                    QgsCoordinateTransform,
-                    QgsPointXY,
-                    QgsProject,
-                )
-
-                point = QgsPointXY(lon, lat)
-                source_crs = QgsCoordinateReferenceSystem("EPSG:4326")
-                layer_crs = layer.crs()
-                if source_crs != layer_crs:
-                    transform = QgsCoordinateTransform(source_crs, layer_crs, QgsProject.instance())
-                    point = transform.transform(point)
-                raw_value, success = layer.dataProvider().sample(point, 1)
-                if (
-                    not success
-                    or raw_value is None
-                    or not math.isfinite(raw_value)
-                    or raw_value <= -9999
-                ):
-                    continue
-                value_range = self._additional_layer_range(layer)
-                if value_range is None:
-                    continue
-                minimum, maximum = value_range
-                values.append(
-                    max(0.0, min(1.0, (float(raw_value) - minimum) / (maximum - minimum)))
-                )
+            raw_value = self._sample_raster(layer, lon, lat)
+            if raw_value is None:
+                continue
+            value_range = self._additional_layer_range(layer)
+            if value_range is None:
+                continue
+            minimum, maximum = value_range
+            values.append(max(0.0, min(1.0, (raw_value - minimum) / (maximum - minimum))))
         return values

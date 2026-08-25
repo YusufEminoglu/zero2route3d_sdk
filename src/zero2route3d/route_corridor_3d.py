@@ -79,7 +79,7 @@ def point_to_multi_linestrings_distance_meters(
 
 
 def get_closest_route_elevation(
-    px: float, py: float, route_coords: Sequence[Tuple[float, float, ...]]
+    px: float, py: float, route_coords: Sequence[Sequence[float]]
 ) -> float:
     """Find the ground elevation of the closest point along a 3D route polyline."""
     if not route_coords:
@@ -113,14 +113,14 @@ def get_closest_route_elevation(
 def get_closest_multi_route_elevation(
     px: float,
     py: float,
-    all_routes: Sequence[Sequence[Tuple[float, float, ...]]],
+    all_routes: Sequence[Sequence[Sequence[float]]],
     green_sampler: Optional[Any] = None,
 ) -> float:
     """Find ground elevation using the green_sampler DEM if available, or closest multi-route elevation."""
     if green_sampler is not None and hasattr(green_sampler, "sample_elevation"):
         with contextlib.suppress(Exception):
             elev = green_sampler.sample_elevation(px, py)
-            if math.isfinite(elev) and elev != 0.0:
+            if elev is not None and math.isfinite(elev) and elev != 0.0:
                 return float(elev)
 
     if not all_routes:
@@ -376,10 +376,12 @@ def filter_corridor_assets_multi_route(
             nx = -dy_m / seg_len
             ny = dx_m / seg_len
 
-            for s in range(num_steps):
-                t = (s + 0.5) / num_steps
-                center_lon = p1[0] + t * (p2[0] - p1[0])
-                center_lat = p1[1] + t * (p2[1] - p1[1])
+            for step in range(num_steps):
+                # Named `fraction`, not `t`: `t` is the OsmTree loop variable above,
+                # and rebinding it here made the two impossible to tell apart.
+                fraction = (step + 0.5) / num_steps
+                center_lon = p1[0] + fraction * (p2[0] - p1[0])
+                center_lat = p1[1] + fraction * (p2[1] - p1[1])
 
                 for offset_m in lateral_offsets:
                     if abs(offset_m) > buf_m:
@@ -420,9 +422,11 @@ def filter_corridor_assets_multi_route(
                     green_val = 0.55
                     if green_sampler is not None and hasattr(green_sampler, "sample_greenery"):
                         try:
-                            green_val = float(green_sampler.sample_greenery(cand_lon, cand_lat))
+                            sampled_green = green_sampler.sample_greenery(cand_lon, cand_lat)
                         except Exception:
-                            green_val = 0.55
+                            sampled_green = None
+                        if sampled_green is not None and math.isfinite(sampled_green):
+                            green_val = float(sampled_green)
 
                     if green_val < 0.15:
                         continue

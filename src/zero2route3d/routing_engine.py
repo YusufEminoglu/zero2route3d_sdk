@@ -11,7 +11,7 @@ from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
 from .environmental_raster import EnvironmentalSurfaceSampler, MCDAWeights
 from .input_validation import deduplicate_adjacent_coordinates, validate_waypoint_coordinates
 from .kinematics import haversine_distance_2d
-from .mobility_profiles import MobilityProfile, get_profile
+from .mobility_profiles import MobilityProfile, resolve_profile
 from .network_source import RoadSegment
 from .profile_stats import (
     RouteStatistics,
@@ -115,7 +115,7 @@ class RouteResult3D:
             )
         pts_xml = "\n".join(trkpts)
         return f"""<?xml version="1.0" encoding="UTF-8"?>
-<gpx version="1.1" creator="02Route 3D - QGIS" xmlns="http://www.topografix.com/GPX/1/1">
+<gpx version="1.1" creator="zero2route3d-sdk" xmlns="http://www.topografix.com/GPX/1/1">
   <metadata>
     <name>02Route 3D - {self.profile.name}</name>
   </metadata>
@@ -128,14 +128,15 @@ class RouteResult3D:
 </gpx>"""
 
     def to_html(self, filepath: Optional[Union[str, Path]] = None) -> str:
-        """Export or save an interactive Three.js 60 FPS WebGL 3D Cockpit HTML bundle."""
+        """Return a self-contained interactive HTML report, optionally saving it too."""
         from .html_bundler import StandaloneHtmlBundler
 
-        bundler = StandaloneHtmlBundler()
-        feature = self.to_geojson_feature()
+        document = StandaloneHtmlBundler().bundle(self.to_geojson_feature())
         if filepath is not None:
-            bundler.bundle_to_file(feature, filepath)
-        return bundler.bundle(feature)
+            out_path = Path(filepath)
+            out_path.parent.mkdir(parents=True, exist_ok=True)
+            out_path.write_text(document, encoding="utf-8")
+        return document
 
     def _repr_html_(self) -> str:
         """Rich HTML display for Jupyter Notebook and Google Colab cells."""
@@ -150,7 +151,7 @@ class RouteResult3D:
     <div style="background: #1e293b; padding: 8px; border-radius: 6px;"><span style="font-size: 11px; color: #94a3b8;">Calories</span><br><strong style="font-size: 14px; color: #fb923c;">{stats.total_calories_kcal:.0f} kcal</strong></div>
     <div style="background: #1e293b; padding: 8px; border-radius: 6px;"><span style="font-size: 11px; color: #94a3b8;">ADA Compliant</span><br><strong style="font-size: 14px; color: {"#4ade80" if stats.ada_compliant else "#f87171"};">{"Yes" if stats.ada_compliant else "No"}</strong></div>
   </div>
-  <div style="font-size: 11px; color: #94a3b8;">3D Coordinates: {len(self.coordinates_3d)} points | Call <code>route.to_html('viewer.html')</code> for WebGL cockpit.</div>
+  <div style="font-size: 11px; color: #94a3b8;">3D Coordinates: {len(self.coordinates_3d)} points | Call <code>route.to_html('report.html')</code> for the interactive offline report.</div>
 </div>"""
 
     def to_dxf(self, filepath: Union[str, Path]) -> None:
@@ -215,7 +216,8 @@ class RoutingEngine3D:
 
             key = (round(lon, 5), round(lat, 5))
             if key not in self.coord_to_node:
-                z = raw_z if raw_z != 0.0 else self.sampler.sample_elevation(lon, lat)
+                sampled_z = self.sampler.sample_elevation(lon, lat)
+                z = raw_z if raw_z != 0.0 else (sampled_z if sampled_z is not None else 0.0)
                 if not math.isfinite(z):
                     z = 0.0
                 self.coord_to_node[key] = node_counter
@@ -397,7 +399,7 @@ class RoutingEngine3D:
             return [], False
 
         if start_node == end_node:
-            z1 = self.sampler.sample_elevation(start_pt[0], start_pt[1])
+            z1 = self.sampler.sample_elevation(start_pt[0], start_pt[1]) or 0.0
             dist_d = haversine_distance_2d(start_pt, end_pt)
             if dist_d < 0.1:
                 return [(start_pt[0], start_pt[1], z1)], True
@@ -482,8 +484,8 @@ class RoutingEngine3D:
             curr = prev_map.get(curr)
 
         path.reverse()
-        z_start = self.sampler.sample_elevation(start_pt[0], start_pt[1])
-        z_end = self.sampler.sample_elevation(end_pt[0], end_pt[1])
+        z_start = self.sampler.sample_elevation(start_pt[0], start_pt[1]) or 0.0
+        z_end = self.sampler.sample_elevation(end_pt[0], end_pt[1]) or 0.0
 
         final_path: List[Tuple[float, float, float]] = []
         p_start_3d = (start_pt[0], start_pt[1], z_start)
@@ -556,12 +558,17 @@ class RoutingEngine3D:
     def calculate_route(
         self,
         waypoints: Sequence[Waypoint],
-        profile_key: str = "adult",
+        profile_key: Union[str, MobilityProfile] = "adult",
         optimize_tsp: bool = False,
         compute_alternatives: bool = True,
     ) -> RouteResult3D:
-        """Compute complete multi-stop 3D route traversing all waypoints."""
-        profile = get_profile(profile_key)
+        """Compute complete multi-stop 3D route traversing all waypoints.
+
+        ``profile_key`` accepts a registered key or a :class:`MobilityProfile`
+        instance, so custom profiles are honoured instead of being replaced by
+        the default 'adult' profile.
+        """
+        profile = resolve_profile(profile_key)
         validation_error = validate_waypoint_coordinates(waypoints)
         if validation_error:
             return RouteResult3D(
@@ -580,7 +587,7 @@ class RoutingEngine3D:
                 z0 = (
                     w0.elevation_m
                     if w0.elevation_m is not None and math.isfinite(w0.elevation_m)
-                    else self.sampler.sample_elevation(w0.lon, w0.lat)
+                    else (self.sampler.sample_elevation(w0.lon, w0.lat) or 0.0)
                 )
                 coords = [(w0.lon, w0.lat, z0)]
                 stats.min_elevation_m = z0
@@ -601,7 +608,7 @@ class RoutingEngine3D:
         # Optional TSP optimization for >2 waypoints
         if optimize_tsp and len(wp_list) > 2:
             pts_tuples = [
-                (w.lon, w.lat, self.sampler.sample_elevation(w.lon, w.lat)) for w in wp_list
+                (w.lon, w.lat, self.sampler.sample_elevation(w.lon, w.lat) or 0.0) for w in wp_list
             ]
             ordered_indices = solve_tsp_order(pts_tuples, fix_start=True, fix_end=True)
             wp_list = [wp_list[idx] for idx in ordered_indices]
@@ -707,11 +714,11 @@ class RoutingEngine3D:
         self,
         origins: Sequence[Waypoint],
         destinations: Sequence[Waypoint],
-        profile_key: str = "adult",
+        profile_key: Union[str, MobilityProfile] = "adult",
     ) -> List[Dict[str, Any]]:
         """Compute complete N x M Origin-Destination 3D cost matrix."""
         matrix_rows = []
-        profile = get_profile(profile_key)
+        profile = resolve_profile(profile_key)
 
         for i, orig in enumerate(origins):
             for j, dest in enumerate(destinations):

@@ -4,11 +4,25 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "zero2route3d-sdk"
-version = "0.1.0"
+version = "0.2.0"
 authors = [
     { name = "Yusuf Eminoğlu", email = "yusufeminoglu@gmail.com" }
 ]
 description = "Headless 3D spatial mobility, biomechanical human kinematics, and multi-criteria routing engine."
+keywords = [
+    "gis",
+    "routing",
+    "shortest-path",
+    "isochrone",
+    "accessibility",
+    "walkability",
+    "mobility",
+    "kinematics",
+    "openstreetmap",
+    "dem",
+    "pareto",
+    "map-matching",
+]
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.9"
@@ -86,11 +100,25 @@ ignore = ["E501"]
 files = ["src"]
 
 [[tool.mypy.overrides]]
-module = ["scipy.*", "sklearn.*", "shapely.*", "rasterio.*", "geopandas.*", "networkx.*", "matplotlib.*"]
+module = [
+    "scipy.*",
+    "sklearn.*",
+    "shapely.*",
+    "rasterio.*",
+    "geopandas.*",
+    "networkx.*",
+    "matplotlib.*",
+    # QGIS and GDAL are optional, host-provided runtimes: every import of them in
+    # this package is lazy and guarded, and they are never installed in CI.
+    "qgis.*",
+    "osgeo.*",
+]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+# Lets `pytest` run straight from a clone, without an editable install first.
+pythonpath = ["src"]
 
 [tool.coverage.run]
 source = ["zero2route3d"]

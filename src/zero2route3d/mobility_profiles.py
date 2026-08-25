@@ -10,7 +10,7 @@ import json
 import math
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 
 @dataclass
@@ -452,9 +452,39 @@ PROFILE_COLORS: Dict[str, str] = {
 }
 
 
-def get_profile(key: str) -> MobilityProfile:
-    """Retrieve profile by key, falling back to 'adult' if unknown."""
-    return PROFILES.get(key.lower(), PROFILES["adult"])
+class UnknownProfileError(KeyError):
+    """Raised when a profile key does not match any registered mobility profile."""
+
+
+def get_profile(key: str, strict: bool = False) -> MobilityProfile:
+    """Retrieve a profile by key.
+
+    With ``strict=False`` (the default, kept for backwards compatibility) an
+    unknown key falls back to 'adult'. With ``strict=True`` it raises
+    :class:`UnknownProfileError` instead -- which is what the high-level API uses,
+    so that a typo like ``profile="bicycle "`` cannot silently route a truck as a
+    pedestrian.
+    """
+    resolved = PROFILES.get(str(key).strip().lower())
+    if resolved is not None:
+        return resolved
+    if strict:
+        raise UnknownProfileError(
+            f"Unknown mobility profile {key!r}. Valid keys: {', '.join(list_profile_keys())}"
+        )
+    return PROFILES["adult"]
+
+
+def resolve_profile(profile: Union[str, MobilityProfile], strict: bool = False) -> MobilityProfile:
+    """Accept either a profile key or a ready-made :class:`MobilityProfile`.
+
+    Custom profiles built in user code are returned untouched, so they are no
+    longer silently replaced by the built-in 'adult' profile when passed to an
+    engine that used to take only a key.
+    """
+    if isinstance(profile, MobilityProfile):
+        return profile
+    return get_profile(str(profile), strict=strict)
 
 
 def get_profile_color(key: str) -> str:

@@ -231,8 +231,8 @@ class HMMMapMatcher3D:
             candidates_per_time.append(cands[:10])
 
         T = len(valid_raw)
-        viterbi_log = [{} for _ in range(T)]
-        backpointer = [{} for _ in range(T)]
+        viterbi_log: List[Dict[int, float]] = [{} for _ in range(T)]
+        backpointer: List[Dict[int, int]] = [{} for _ in range(T)]
 
         for c_idx, cand in enumerate(candidates_per_time[0]):
             viterbi_log[0][c_idx] = self._emission_log_prob(cand["dist_m"])
@@ -263,7 +263,8 @@ class HMMMapMatcher3D:
                 backpointer[t][c_curr_idx] = best_prev
 
         if viterbi_log[T - 1]:
-            best_last_idx = max(viterbi_log[T - 1], key=viterbi_log[T - 1].get)
+            last_step = viterbi_log[T - 1]
+            best_last_idx = max(last_step, key=lambda idx: last_step[idx])
         else:
             best_last_idx = 0
 

@@ -13,52 +13,119 @@ from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
 from .environmental_raster import EnvironmentalSurfaceSampler, MCDAWeights
 from .isochrone_engine import IsochroneEngine3D, IsochroneResult
 from .map_matching_3d import GPXPoint, HMMMapMatcher3D, MapMatching3DResult
-from .mobility_profiles import MobilityProfile
+from .mobility_profiles import MobilityProfile, resolve_profile
 from .network_source import NetworkSourceManager, RoadSegment
 from .pareto_router import ParetoFrontierResult, ParetoMultiObjectiveRouter
 from .routing_engine import RouteResult3D, RoutingEngine3D, Waypoint
 
+#: Anything the helpers below accept as a road network.
+NetworkInput = Union[str, Path, Sequence[RoadSegment], Dict[str, Any], Any]
+#: A registered profile key, or a ready-made (possibly custom) MobilityProfile.
+ProfileInput = Union[str, MobilityProfile]
 
-def _load_network(
-    network_input: Union[str, Path, Sequence[RoadSegment], Sequence[Dict[str, Any]], Any],
-) -> List[RoadSegment]:
-    """Parse road segments from filepath, GeoJSON dict, list, or GeoDataFrame."""
-    if (
-        isinstance(network_input, list)
-        and network_input
-        and isinstance(network_input[0], RoadSegment)
-    ):
-        return list(network_input)
+__all__ = [
+    "NetworkInput",
+    "ProfileInput",
+    "match_gps_track_3d",
+    "solve_3d_isochrones",
+    "solve_3d_route",
+    "solve_4d_pareto_frontier",
+]
+
+
+def _load_network(network_input: NetworkInput) -> List[RoadSegment]:
+    """Parse road segments from a filepath, GeoJSON dict, segment list or GeoDataFrame.
+
+    Raises ValueError / FileNotFoundError for input that cannot be interpreted.
+    Returning an empty network instead would push the failure downstream, where
+    it resurfaces as a misleading "could not snap origin to network graph".
+    """
+    if isinstance(network_input, (list, tuple)) and network_input:
+        if all(isinstance(item, RoadSegment) for item in network_input):
+            return list(network_input)
+        raise ValueError(
+            "A network given as a sequence must contain RoadSegment objects; got "
+            f"{type(network_input[0]).__name__}."
+        )
 
     mgr = NetworkSourceManager()
     if isinstance(network_input, (str, Path)):
-        p = Path(network_input)
-        if p.exists() and p.suffix.lower() in (".json", ".geojson"):
-            with open(p, "r", encoding="utf-8") as f:
-                data = json.load(f)
-            return mgr.extract_from_geojson(data)
+        path = Path(network_input)
+        if not path.exists():
+            raise FileNotFoundError(f"Network file not found: {path}")
+        if path.suffix.lower() not in (".json", ".geojson"):
+            raise ValueError(
+                f"Unsupported network file type '{path.suffix}'. Provide a "
+                ".geojson/.json file, a GeoJSON dict, a GeoDataFrame, or a list "
+                "of RoadSegment objects."
+            )
+        with open(path, "r", encoding="utf-8") as handle:
+            data = json.load(handle)
+        return mgr.extract_from_geojson(data)
 
     if isinstance(network_input, dict):
         return mgr.extract_from_geojson(network_input)
 
-    # Check for geopandas DataFrame
+    # geopandas.GeoDataFrame, duck-typed so geopandas stays an optional import.
     if hasattr(network_input, "geometry") and hasattr(network_input, "iterfeatures"):
         from .integrations import from_geodataframe
 
         return from_geodataframe(network_input)
 
-    return []
+    raise ValueError(
+        f"Unsupported network input of type {type(network_input).__name__}. Provide "
+        "a GeoJSON path or dict, a geopandas.GeoDataFrame, or a list of RoadSegment "
+        "objects."
+    )
+
+
+def _build_engine(
+    network: NetworkInput,
+    dem_sampler: Optional[EnvironmentalSurfaceSampler] = None,
+    mcda_weights: Optional[MCDAWeights] = None,
+    fetch_online_dem: bool = False,
+) -> RoutingEngine3D:
+    """Load a network into a routing engine, optionally warming the elevation cache."""
+    segments = _load_network(network)
+    if not segments:
+        raise ValueError("The supplied network contains no usable road segments.")
+
+    sampler = dem_sampler or EnvironmentalSurfaceSampler()
+    if fetch_online_dem and not sampler.has_elevation_source:
+        coords = sorted(
+            {(round(pt[0], 5), round(pt[1], 5)) for seg in segments for pt in (seg.p1, seg.p2)}
+        )
+        sampler.prefetch_elevations(coords)
+
+    engine = RoutingEngine3D(sampler=sampler, weights=mcda_weights)
+    engine.build_graph(segments)
+    return engine
+
+
+def _to_waypoint(pt: Any, name: str = "") -> Waypoint:
+    """Coerce a (lon, lat[, elev]) tuple or a Waypoint into a Waypoint."""
+    if isinstance(pt, Waypoint):
+        return pt
+    if isinstance(pt, (tuple, list)) and len(pt) >= 2:
+        return Waypoint(
+            lon=float(pt[0]),
+            lat=float(pt[1]),
+            elevation_m=float(pt[2]) if len(pt) > 2 else 0.0,
+            name=name,
+        )
+    raise ValueError(f"Invalid waypoint {pt!r}: expected (lon, lat[, elevation]) or a Waypoint.")
 
 
 def solve_3d_route(
     origin: Union[Tuple[float, float], Tuple[float, float, float], Waypoint],
     destination: Union[Tuple[float, float], Tuple[float, float, float], Waypoint],
-    network: Union[str, Path, Sequence[RoadSegment], Dict[str, Any], Any],
-    profile: Union[str, MobilityProfile] = "adult",
+    network: NetworkInput,
+    profile: ProfileInput = "adult",
     dem_sampler: Optional[EnvironmentalSurfaceSampler] = None,
     mcda_weights: Optional[MCDAWeights] = None,
     intermediate_stops: Optional[Sequence[Union[Tuple[float, float], Waypoint]]] = None,
     optimize_stops_order: bool = False,
+    fetch_online_dem: bool = False,
 ) -> RouteResult3D:
     """Solve a multi-criteria 3D least-cost route in a single call.
 
@@ -66,91 +133,71 @@ def solve_3d_route(
         origin: Start (lon, lat) or (lon, lat, elev) or Waypoint.
         destination: End (lon, lat) or (lon, lat, elev) or Waypoint.
         network: Road network GeoJSON filepath, dictionary, GeoDataFrame, or RoadSegment list.
-        profile: Profile key (e.g. 'adult', 'wheelchair', 'commuter_bike') or MobilityProfile instance.
+        profile: Profile key (e.g. 'adult', 'wheelchair', 'bicycle') or a MobilityProfile
+            instance -- including a custom one, which is now honoured rather than
+            silently replaced by the default profile.
         dem_sampler: Optional environmental/elevation raster sampler.
         mcda_weights: Optional AHP multi-criteria weighting configuration.
         intermediate_stops: Optional intermediate waypoints.
         optimize_stops_order: Solve TSP tour over intermediate stops if True.
+        fetch_online_dem: Query Open-Elevation once for every network node when no
+            DEM raster is configured. Needs network access; without it (and without
+            a DEM) the route is computed on flat terrain.
 
     Returns:
         RouteResult3D containing 3D coordinates, elevation profile, and rich kinematic statistics.
+
+    Raises:
+        ValueError: if the network or the profile cannot be interpreted.
     """
-    segments = _load_network(network)
-    engine = RoutingEngine3D(sampler=dem_sampler, weights=mcda_weights)
-    engine.build_graph(segments)
+    resolved_profile = resolve_profile(profile, strict=True)
+    engine = _build_engine(network, dem_sampler, mcda_weights, fetch_online_dem)
 
-    def to_wp(pt: Any, name: str) -> Waypoint:
-        if isinstance(pt, Waypoint):
-            return pt
-        if isinstance(pt, (tuple, list)):
-            return Waypoint(
-                lon=float(pt[0]),
-                lat=float(pt[1]),
-                elevation_m=float(pt[2]) if len(pt) > 2 else 0.0,
-                name=name,
-            )
-        raise ValueError(f"Invalid waypoint: {pt}")
-
-    waypoints = [to_wp(origin, "Origin")]
+    waypoints = [_to_waypoint(origin, "Origin")]
     if intermediate_stops:
         for idx, stop in enumerate(intermediate_stops, start=1):
-            waypoints.append(to_wp(stop, f"Stop {idx}"))
-    waypoints.append(to_wp(destination, "Destination"))
+            waypoints.append(_to_waypoint(stop, f"Stop {idx}"))
+    waypoints.append(_to_waypoint(destination, "Destination"))
 
-    prof_key = profile.name.lower() if isinstance(profile, MobilityProfile) else str(profile)
     return engine.calculate_route(
-        waypoints, profile_key=prof_key, optimize_tsp=optimize_stops_order
+        waypoints, profile_key=resolved_profile, optimize_tsp=optimize_stops_order
     )
 
 
 def solve_3d_isochrones(
     center: Union[Tuple[float, float], Waypoint],
-    network: Union[str, Path, Sequence[RoadSegment], Dict[str, Any], Any],
-    profile: Union[str, MobilityProfile] = "adult",
+    network: NetworkInput,
+    profile: ProfileInput = "adult",
     time_intervals_min: Sequence[float] = (5.0, 10.0, 15.0),
     dem_sampler: Optional[EnvironmentalSurfaceSampler] = None,
+    fetch_online_dem: bool = False,
 ) -> IsochroneResult:
     """Compute anisotropic 3D isochrone travel-time wavefront bands from a center point."""
-    segments = _load_network(network)
-    engine = RoutingEngine3D(sampler=dem_sampler)
-    engine.build_graph(segments)
+    resolved_profile = resolve_profile(profile, strict=True)
+    engine = _build_engine(network, dem_sampler, None, fetch_online_dem)
 
-    origin_wp = (
-        center
-        if isinstance(center, Waypoint)
-        else Waypoint(lon=float(center[0]), lat=float(center[1]), name="Center")
-    )
-    prof_key = profile.name.lower() if isinstance(profile, MobilityProfile) else str(profile)
+    origin_wp = _to_waypoint(center, "Center")
 
     iso_engine = IsochroneEngine3D(engine)
     return iso_engine.compute_isochrones(
-        origin_wp, profile_key=prof_key, time_intervals_min=time_intervals_min
+        origin_wp, profile_key=resolved_profile, time_intervals_min=time_intervals_min
     )
 
 
 def solve_4d_pareto_frontier(
     origin: Union[Tuple[float, float], Waypoint],
     destination: Union[Tuple[float, float], Waypoint],
-    network: Union[str, Path, Sequence[RoadSegment], Dict[str, Any], Any],
-    profile: Union[str, MobilityProfile] = "commuter_bike",
+    network: NetworkInput,
+    profile: ProfileInput = "bicycle",
     dem_sampler: Optional[EnvironmentalSurfaceSampler] = None,
+    fetch_online_dem: bool = False,
 ) -> ParetoFrontierResult:
     """Compute non-dominated 4D Pareto frontier trade-offs across Time, Climb, Heat, and Calories."""
-    segments = _load_network(network)
-    sampler = dem_sampler or EnvironmentalSurfaceSampler()
-    engine = RoutingEngine3D(sampler=sampler)
-    engine.build_graph(segments)
+    resolved_profile = resolve_profile(profile, strict=True)
+    engine = _build_engine(network, dem_sampler, None, fetch_online_dem)
 
-    start_wp = (
-        origin
-        if isinstance(origin, Waypoint)
-        else Waypoint(lon=float(origin[0]), lat=float(origin[1]))
-    )
-    end_wp = (
-        destination
-        if isinstance(destination, Waypoint)
-        else Waypoint(lon=float(destination[0]), lat=float(destination[1]))
-    )
+    start_wp = _to_waypoint(origin, "Origin")
+    end_wp = _to_waypoint(destination, "Destination")
 
     start_node = engine.find_nearest_node((start_wp.lon, start_wp.lat))
     end_node = engine.find_nearest_node((end_wp.lon, end_wp.lat))
@@ -158,27 +205,31 @@ def solve_4d_pareto_frontier(
     if start_node is None or end_node is None:
         raise ValueError("Could not snap origin or destination to network graph.")
 
-    pareto_router = ParetoMultiObjectiveRouter(engine.nodes, engine.adj, sampler)
-    prof_key = profile.name.lower() if isinstance(profile, MobilityProfile) else str(profile)
-    return pareto_router.solve_pareto_frontier(start_node, end_node, profile_key=prof_key)
+    pareto_router = ParetoMultiObjectiveRouter(engine.nodes, engine.adj, engine.sampler)
+    return pareto_router.solve_pareto_frontier(start_node, end_node, profile_key=resolved_profile)
 
 
 def match_gps_track_3d(
     gpx_points: Sequence[Union[GPXPoint, Tuple[float, float], Tuple[float, float, float]]],
-    network: Union[str, Path, Sequence[RoadSegment], Dict[str, Any], Any],
-    gps_sigma: float = 12.0,
-    beta: float = 5.0,
+    network: NetworkInput,
+    sigma_z: float = 4.07,
+    beta: float = 3.0,
 ) -> MapMatching3DResult:
-    """Match noisy GPS/GPX track coordinates onto the 3D road network via HMM Viterbi decoding."""
-    segments = _load_network(network)
-    engine = RoutingEngine3D()
-    engine.build_graph(segments)
+    """Match noisy GPS/GPX track coordinates onto the 3D road network via HMM Viterbi decoding.
+
+    Args:
+        gpx_points: GPXPoint objects or (lon, lat[, elevation]) tuples.
+        network: Road network, in any form accepted by the other helpers.
+        sigma_z: GPS emission standard deviation in metres.
+        beta: Transition-probability scale for route-vs-crow-fly distance.
+    """
+    engine = _build_engine(network)
 
     pts: List[GPXPoint] = []
     for p in gpx_points:
         if isinstance(p, GPXPoint):
             pts.append(p)
-        elif isinstance(p, (tuple, list)):
+        elif isinstance(p, (tuple, list)) and len(p) >= 2:
             pts.append(
                 GPXPoint(
                     lon=float(p[0]),
@@ -186,6 +237,8 @@ def match_gps_track_3d(
                     elevation_raw_m=float(p[2]) if len(p) > 2 else 0.0,
                 )
             )
+        else:
+            raise ValueError(f"Invalid GPS point {p!r}: expected (lon, lat[, elevation]).")
 
-    matcher = HMMMapMatcher3D(engine.nodes, engine.adj, gps_sigma=gps_sigma, beta=beta)
+    matcher = HMMMapMatcher3D(engine.nodes, engine.adj, sigma_z=sigma_z, beta=beta)
     return matcher.match_gps_track(pts)

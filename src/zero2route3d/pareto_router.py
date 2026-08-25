@@ -14,7 +14,7 @@ from __future__ import annotations
 import heapq
 import math
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Tuple, Union
 
 from .environmental_raster import EnvironmentalSurfaceSampler
 from .kinematics import (
@@ -24,7 +24,7 @@ from .kinematics import (
     minetti_energy_cost,
     tobler_walking_speed,
 )
-from .mobility_profiles import MobilityProfile, get_profile
+from .mobility_profiles import MobilityProfile, resolve_profile
 from .profile_stats import RouteStatistics, compute_route_statistics
 
 
@@ -173,12 +173,12 @@ class ParetoMultiObjectiveRouter:
         self,
         start_node: int,
         end_node: int,
-        profile_key: str = "adult",
+        profile_key: Union[str, MobilityProfile] = "adult",
         epsilon_dominance: float = 0.03,
         max_frontier_size: int = 12,
     ) -> ParetoFrontierResult:
         """Compute the Pareto Frontier using multi-objective label propagation."""
-        profile = get_profile(profile_key)
+        profile = resolve_profile(profile_key)
         dest_coord = self.nodes[end_node]
 
         def heuristic_time(u_coord: Tuple[float, float, float]) -> float:

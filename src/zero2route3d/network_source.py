@@ -85,7 +85,7 @@ class NetworkSourceManager:
                 conn.request(
                     "GET",
                     f"/api/?q={encoded}&limit={lim}",
-                    headers={"User-Agent": "02Route3D-Plugin/0.1.0"},
+                    headers={"User-Agent": "zero2route3d-sdk"},
                 )
                 resp = conn.getresponse()
                 if resp.status == 200:
@@ -204,6 +204,131 @@ class NetworkSourceManager:
             )
         return self.fetch_osm_network_bbox(bbox)
 
+    def extract_from_geojson(self, data: Any) -> List[RoadSegment]:
+        """Extract road segments from GeoJSON, the SDK's primary network input.
+
+        Accepts a FeatureCollection, a single Feature, a bare geometry, or a list
+        of any of those. LineString and MultiLineString geometries are split into
+        directed vertex-to-vertex segments; Z coordinates are carried through when
+        present. Non-line geometries are skipped.
+
+        OSM-style properties are honoured where available: ``highway``, ``surface``,
+        ``oneway`` (including ``-1``/``reverse``), ``junction=roundabout``, ``lanes``
+        and ``name``.
+        """
+        features = self._iter_geojson_features(data)
+        segments: List[RoadSegment] = []
+
+        for geometry, properties in features:
+            geom_type = str(geometry.get("type", ""))
+            if geom_type == "LineString":
+                lines = [geometry.get("coordinates") or []]
+            elif geom_type == "MultiLineString":
+                lines = list(geometry.get("coordinates") or [])
+            else:
+                continue
+
+            highway = str(properties.get("highway", "residential") or "residential").strip()
+            hierarchy = self._highway_to_hierarchy(highway)
+            is_steps = highway == "steps"
+            surface = str(properties.get("surface", "asphalt") or "asphalt").strip()
+            lanes = 1
+            with contextlib.suppress(Exception):
+                lanes = max(1, int(properties.get("lanes", 1)))
+
+            oneway_raw = properties.get("oneway", False)
+            oneway_tag = str(oneway_raw).strip().lower()
+            # oneway=-1 means one-way *against* the digitisation order; storing it
+            # unreversed routes traffic the wrong way down the street.
+            reversed_oneway = oneway_tag in {"-1", "reverse"}
+            oneway = (
+                oneway_raw is True
+                or oneway_tag in {"yes", "1", "true"}
+                or reversed_oneway
+                or str(properties.get("junction", "") or "").strip().lower() == "roundabout"
+            )
+            street_name = str(properties.get("name", "") or "").strip()
+
+            for line in lines:
+                vertices = self._clean_line_coordinates(line)
+                for c1, c2 in zip(vertices, vertices[1:]):
+                    dist = haversine_distance_2d(c1, c2)
+                    if not math.isfinite(dist) or dist < 0.1:
+                        continue
+                    p1, p2 = (c2, c1) if reversed_oneway else (c1, c2)
+                    segments.append(
+                        RoadSegment(
+                            p1=p1,
+                            p2=p2,
+                            length_m=dist,
+                            highway_type=highway,
+                            hierarchy_rank=hierarchy,
+                            lanes=lanes,
+                            is_steps=is_steps,
+                            surface=surface,
+                            is_oneway=oneway,
+                            name=street_name,
+                        )
+                    )
+
+        return segments
+
+    @classmethod
+    def _iter_geojson_features(cls, data: Any) -> List[Tuple[Dict[str, Any], Dict[str, Any]]]:
+        """Flatten any GeoJSON container into (geometry, properties) pairs."""
+        pairs: List[Tuple[Dict[str, Any], Dict[str, Any]]] = []
+
+        if isinstance(data, (list, tuple)):
+            for item in data:
+                pairs.extend(cls._iter_geojson_features(item))
+            return pairs
+
+        if not isinstance(data, dict):
+            return pairs
+
+        node_type = str(data.get("type", ""))
+        if node_type == "FeatureCollection":
+            for feature in data.get("features") or []:
+                pairs.extend(cls._iter_geojson_features(feature))
+        elif node_type == "Feature":
+            geometry = data.get("geometry")
+            properties = data.get("properties") or {}
+            if isinstance(geometry, dict):
+                if str(geometry.get("type", "")) == "GeometryCollection":
+                    for sub in geometry.get("geometries") or []:
+                        if isinstance(sub, dict):
+                            pairs.append((sub, properties))
+                else:
+                    pairs.append((geometry, properties))
+        elif node_type == "GeometryCollection":
+            for sub in data.get("geometries") or []:
+                if isinstance(sub, dict):
+                    pairs.append((sub, {}))
+        elif node_type:
+            pairs.append((data, {}))
+
+        return pairs
+
+    @staticmethod
+    def _clean_line_coordinates(line: Any) -> List[Tuple[float, float, float]]:
+        """Coerce a GeoJSON coordinate array into finite (lon, lat, z) tuples."""
+        vertices: List[Tuple[float, float, float]] = []
+        if not isinstance(line, (list, tuple)):
+            return vertices
+        for pt in line:
+            if not isinstance(pt, (list, tuple)) or len(pt) < 2:
+                continue
+            try:
+                lon = float(pt[0])
+                lat = float(pt[1])
+                z = float(pt[2]) if len(pt) > 2 else 0.0
+            except (TypeError, ValueError, OverflowError):
+                continue
+            if not (math.isfinite(lon) and math.isfinite(lat)):
+                continue
+            vertices.append((lon, lat, z if math.isfinite(z) else 0.0))
+        return vertices
+
     def _query_overpass(self, query: str) -> Dict[str, Any] | None:
         """Safe HTTPS POST to Overpass API without generic urlopen."""
         endpoints = [
@@ -213,7 +338,7 @@ class NetworkSourceManager:
         body = urllib.parse.urlencode({"data": query}).encode("utf-8")
         headers = {
             "Content-Type": "application/x-www-form-urlencoded",
-            "User-Agent": "02Route3D-QGIS-Plugin/0.1.0",
+            "User-Agent": "zero2route3d-sdk",
         }
 
         for host, path in endpoints:

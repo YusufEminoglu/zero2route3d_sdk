@@ -6,12 +6,13 @@ All dependencies are lazily loaded with graceful fallbacks.
 
 from __future__ import annotations
 
-import contextlib
 import math
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
 
 from .kinematics import haversine_distance_2d
 from .network_source import RoadSegment
+from .raster_source import GeoTiffRasterSource
 
 
 def to_shapely_linestring(coordinates_3d: Sequence[Sequence[float]]) -> Any:
@@ -68,7 +69,14 @@ def from_geodataframe(
                 str(row.get(surface_column, "asphalt")) if surface_column in row else "asphalt"
             )
             oneway_raw = row.get(oneway_column, False) if oneway_column in row else False
-            is_oneway = bool(oneway_raw in (True, 1, "yes", "true", "1", "-1"))
+            oneway_tag = str(oneway_raw).strip().lower()
+            # oneway=-1 means one-way *against* the digitisation order. Treating it
+            # as a plain one-way stores the segment pointing the wrong way, so the
+            # router sends traffic the wrong direction down it.
+            reversed_oneway = oneway_tag in ("-1", "reverse")
+            is_oneway = bool(
+                oneway_raw is True or oneway_tag in ("yes", "true", "1") or reversed_oneway
+            )
             is_steps = "step" in highway_val.lower()
 
             for i in range(len(coords) - 1):
@@ -89,8 +97,8 @@ def from_geodataframe(
                 length_m = haversine_distance_2d(p1, p2)
 
                 seg = RoadSegment(
-                    p1=p1,
-                    p2=p2,
+                    p1=p2 if reversed_oneway else p1,
+                    p2=p1 if reversed_oneway else p2,
                     length_m=length_m,
                     highway_type=highway_val,
                     surface=surface_val,
@@ -150,7 +158,12 @@ def to_geodataframe(
                     }
                 )
 
-    return gpd.GeoDataFrame(records, crs=crs)
+    if not records:
+        # GeoDataFrame([]) has no geometry column, so every downstream .geometry
+        # access raises instead of yielding an empty result set.
+        return gpd.GeoDataFrame({"geometry": []}, geometry="geometry", crs=crs)
+
+    return gpd.GeoDataFrame(records, geometry="geometry", crs=crs)
 
 
 def to_networkx_digraph(engine_or_segments: Any) -> Any:
@@ -225,26 +238,23 @@ def to_networkx_digraph(engine_or_segments: Any) -> Any:
     return g
 
 
-def sample_rasterio_dem(tif_path: str, coords: Sequence[Tuple[float, float]]) -> List[float]:
-    """Sample elevations directly from a GeoTIFF using rasterio with windowed reading."""
+def sample_rasterio_dem(
+    tif_path: Union[str, Path],
+    coords: Sequence[Tuple[float, float]],
+    band: int = 1,
+) -> List[Optional[float]]:
+    """Sample elevations from a GeoTIFF at WGS84 (lon, lat) coordinates.
+
+    Coordinates are reprojected into the raster's own CRS first, so a UTM or
+    national-grid DEM works without the caller converting anything -- previously
+    every sample of such a raster silently fell outside the grid.
+
+    NoData and out-of-coverage points come back as None rather than 0.0, which is
+    a real elevation and must not stand in for missing data. All points are read
+    in a single pass.
+    """
+    source = GeoTiffRasterSource(tif_path, band=band)
     try:
-        import rasterio
-    except ImportError as exc:
-        raise ImportError(
-            "rasterio is required for GeoTIFF sampling. Install via 'pip install rasterio'."
-        ) from exc
-
-    results: List[float] = []
-    with rasterio.open(tif_path) as dataset:
-        for lon, lat in coords:
-            with contextlib.suppress(Exception):
-                for val in dataset.sample([(lon, lat)]):
-                    v = float(val[0])
-                    results.append(v if math.isfinite(v) and v > -9999 else 0.0)
-                    break
-                else:
-                    results.append(0.0)
-                continue
-            results.append(0.0)
-
-    return results
+        return source.sample_many(coords)
+    finally:
+        source.close()

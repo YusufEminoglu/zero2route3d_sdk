@@ -8,29 +8,29 @@ from __future__ import annotations
 
 import math
 from pathlib import Path
-from typing import Sequence, Tuple
+from typing import Any, Sequence, Union
 
 from .kinematics import haversine_distance_2d
 
 
 def export_route_to_dxf_3d(
-    coords_3d: Sequence[Tuple[float, float, float]],
-    target_path: Path,
+    coords_3d: Sequence[Sequence[float]],
+    target_path: Union[str, Path],
     include_profile_section: bool = True,
     profile_vertical_scale: float = 5.0,
     layer_name: str = "3D_ROUTE",
 ) -> None:
     """Write 3D route coordinates to standard AutoCAD DXF file."""
-    target_path = Path(target_path)
+    out_path = Path(target_path)
 
-    def finite(value: object, default: float = 0.0) -> float:
+    def finite(value: Any, default: float = 0.0) -> float:
         try:
             number = float(value)
         except (TypeError, ValueError):
             return default
         return number if math.isfinite(number) else default
 
-    target_path.parent.mkdir(parents=True, exist_ok=True)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
     clean_coords = [
         (
             finite(pt[0]),
@@ -62,7 +62,7 @@ def export_route_to_dxf_3d(
             "0",
             "EOF",
         ]
-        target_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+        out_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
         return
 
     lines = [
@@ -228,4 +228,4 @@ def export_route_to_dxf_3d(
         ]
     )
 
-    target_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    out_path.write_text("\n".join(lines) + "\n", encoding="utf-8")

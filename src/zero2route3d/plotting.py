@@ -1,13 +1,15 @@
 """Publication-ready scientific plotting and visualization for 02Route 3D.
 
-Generates cross-sectional elevation profiles, 4D Pareto trade-off diagrams,
-E2SFCA Lorenz equity curves, and multi-profile radar comparison charts.
-All plotting dependencies (matplotlib) are lazily loaded with graceful fallbacks.
+Generates longitudinal elevation profiles with a profile-aware energy curve,
+4D Pareto trade-off diagrams, and E2SFCA Lorenz equity curves. matplotlib is
+imported lazily so the core SDK stays dependency-light.
 """
 
 from __future__ import annotations
 
-from typing import Any, List, Optional, Tuple
+from typing import Any, Callable, List, Optional, Tuple
+
+PARETO_METRICS = ("time_min", "climb_m", "calories_kcal")
 
 
 def plot_elevation_profile(
@@ -49,7 +51,19 @@ def plot_elevation_profile(
         raise ValueError("At least 2 coordinates are required to plot an elevation profile.")
 
     # Calculate cumulative distance and incremental slopes
-    from .kinematics import haversine_distance_2d, minetti_energy_cost
+    from .kinematics import cycling_energy_cost, haversine_distance_2d, minetti_energy_cost
+
+    # Metabolic energy depends on how the route is travelled. Charging a car
+    # driver walking calories -- or a cyclist a pedestrian's -- is not a rounding
+    # error, it is the wrong model.
+    category = str(getattr(getattr(route, "profile", None), "category", "pedestrian")).lower()
+    energy_model: Optional[Callable[..., Tuple[float, float]]]
+    if category == "vehicle":
+        energy_model = None
+    elif category == "micromobility":
+        energy_model = cycling_energy_cost
+    else:
+        energy_model = minetti_energy_cost
 
     distances_km = [0.0]
     elevations_m = [coords[0][2]]
@@ -67,13 +81,18 @@ def plot_elevation_profile(
         elev_diff_m = p2[2] - p1[2]
         slope_pct = (elev_diff_m / step_m * 100.0) if step_m > 0 else 0.0
 
-        _j, step_kcal = minetti_energy_cost(slope_pct / 100.0, mass_kg=70.0, distance_m=step_m)
-        cum_kcal += step_kcal
+        if energy_model is not None:
+            _j, step_kcal = energy_model(slope_pct / 100.0, mass_kg=70.0, distance_m=step_m)
+            cum_kcal += step_kcal
 
         distances_km.append(cum_dist)
         elevations_m.append(p2[2])
         slopes_pct.append(slope_pct)
         calories_kcal.append(cum_kcal)
+
+    # A motorised profile expends no metabolic energy, so there is no curve to draw.
+    if energy_model is None:
+        show_energy = False
 
     fig, ax1 = plt.subplots(figsize=figsize, dpi=150)
 
@@ -105,16 +124,17 @@ def plot_elevation_profile(
         ax2.set_ylabel("Cumulative Energy (kcal)", fontsize=11, fontweight="600", color="#f97316")
         ax2.tick_params(axis="y", labelcolor="#f97316")
 
-    # Title & formatting
+    # Title & formatting. Scoped to this figure, not to pyplot's global "current"
+    # axes, which is ax2 once twinx() has run.
+    ascent_m = sum(max(0.0, coords[i + 1][2] - coords[i][2]) for i in range(len(coords) - 1))
     stat_title = title or (
-        f"3D Route Elevation Profile — Distance: {cum_dist:.2f} km | "
-        f"Ascent: +{sum(max(0, coords[i + 1][2] - coords[i][2]) for i in range(len(coords) - 1)):.1f} m"
+        f"3D Route Elevation Profile - Distance: {cum_dist:.2f} km | Ascent: +{ascent_m:.1f} m"
     )
-    plt.title(stat_title, fontsize=12, fontweight="bold", pad=12)
-    plt.tight_layout()
+    ax1.set_title(stat_title, fontsize=12, fontweight="bold", pad=12)
+    fig.tight_layout()
 
     if save_path:
-        plt.savefig(save_path, bbox_inches="tight")
+        fig.savefig(save_path, bbox_inches="tight")
 
     return fig
 
@@ -135,6 +155,13 @@ def plot_pareto_frontier_2d(
     if not hasattr(pareto_result, "solutions") or not pareto_result.solutions:
         raise ValueError("ParetoFrontierResult must contain at least 1 solution.")
 
+    for name, metric in (("x_metric", x_metric), ("y_metric", y_metric)):
+        if metric not in PARETO_METRICS:
+            raise ValueError(
+                f"{name}={metric!r} is not a Pareto metric. Choose one of "
+                f"{', '.join(PARETO_METRICS)}."
+            )
+
     x_vals: List[float] = []
     y_vals: List[float] = []
     labels: List[str] = []
@@ -154,12 +181,9 @@ def plot_pareto_frontier_2d(
             else sol.costs.calories_kcal
         )
 
-        xv = (
-            time_min if x_metric == "time_min" else (climb_m if x_metric == "climb_m" else cal_kcal)
-        )
-        yv = (
-            climb_m if y_metric == "climb_m" else (time_min if y_metric == "time_min" else cal_kcal)
-        )
+        by_metric = {"time_min": time_min, "climb_m": climb_m, "calories_kcal": cal_kcal}
+        xv = by_metric[x_metric]
+        yv = by_metric[y_metric]
 
         x_vals.append(xv)
         y_vals.append(yv)
@@ -187,10 +211,10 @@ def plot_pareto_frontier_2d(
         pad=12,
     )
     ax.grid(True, linestyle="--", alpha=0.5, zorder=1)
-    plt.tight_layout()
+    fig.tight_layout()
 
     if save_path:
-        plt.savefig(save_path, bbox_inches="tight")
+        fig.savefig(save_path, bbox_inches="tight")
 
     return fig
 
@@ -209,16 +233,26 @@ def plot_lorenz_equity_curve(
     if not hasattr(scorecard, "lorenz_curve"):
         raise ValueError("Expected EquityScorecardResult instance with lorenz_curve.")
 
+    def _share(mapping: Any, *keys: str) -> float:
+        for key in keys:
+            value = mapping.get(key)
+            if value is not None:
+                try:
+                    return float(value)
+                except (TypeError, ValueError):
+                    continue
+        return 0.0
+
     lorenz_pts = scorecard.lorenz_curve
     x_pop: List[float] = []
     y_acc: List[float] = []
-    for p in lorenz_pts:
-        if isinstance(p, dict):
-            x_pop.append(float(p.get("pop_share", p.get("pop_fraction", 0.0))))
-            y_acc.append(float(p.get("acc_share", p.get("acc_fraction", 0.0))))
-        elif isinstance(p, (list, tuple)):
-            x_pop.append(float(p[0]))
-            y_acc.append(float(p[1]))
+    for point in lorenz_pts:
+        if isinstance(point, dict):
+            x_pop.append(_share(point, "pop_share", "pop_fraction"))
+            y_acc.append(_share(point, "acc_share", "acc_fraction"))
+        elif isinstance(point, (list, tuple)) and len(point) >= 2:
+            x_pop.append(float(point[0]))
+            y_acc.append(float(point[1]))
 
     fig, ax = plt.subplots(figsize=figsize, dpi=150)
     ax.plot(
@@ -248,11 +282,11 @@ def plot_lorenz_equity_curve(
     )
     ax.legend(loc="upper left", frameon=True)
     ax.grid(True, linestyle="--", alpha=0.5)
-    ax.set_xlim([0, 1])
-    ax.set_ylim([0, 1])
-    plt.tight_layout()
+    ax.set_xlim(0.0, 1.0)
+    ax.set_ylim(0.0, 1.0)
+    fig.tight_layout()
 
     if save_path:
-        plt.savefig(save_path, bbox_inches="tight")
+        fig.savefig(save_path, bbox_inches="tight")
 
     return fig
