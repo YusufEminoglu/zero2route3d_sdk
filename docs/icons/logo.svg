@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#18101e"/>
+      <stop offset="100%" stop-color="#241430"/>
+    </linearGradient>
+    <linearGradient id="glow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f43f5e"/>
+      <stop offset="50%" stop-color="#f59e0b"/>
+      <stop offset="100%" stop-color="#06b6d4"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#f43f5e" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+
+  <rect x="24" y="24" width="464" height="464" rx="96" fill="url(#bg)" stroke="url(#glow)" stroke-width="6" filter="url(#shadow)"/>
+
+  <!-- 3D Terrain DEM Wireframe Contours -->
+  <g fill="none" stroke="#f43f5e" stroke-width="2" opacity="0.35">
+    <path d="M80 340 Q 180 260 256 300 T 432 320"/>
+    <path d="M80 290 Q 180 200 256 240 T 432 260"/>
+    <path d="M80 240 Q 180 140 256 180 T 432 200"/>
+    <path d="M120 190 Q 200 100 256 130 T 390 150"/>
+  </g>
+
+  <!-- Glowing 3D Kinematic Pareto Trajectory Curve -->
+  <path d="M110 330 C 160 280, 190 140, 260 170 S 340 100, 400 90" fill="none" stroke="url(#glow)" stroke-width="8" stroke-linecap="round"/>
+  
+  <!-- Waypoints & Metabolic Velocity Vectors -->
+  <circle cx="110" cy="330" r="10" fill="#06b6d4" stroke="#ffffff" stroke-width="3"/>
+  <circle cx="210" cy="200" r="8" fill="#f59e0b" stroke="#ffffff" stroke-width="2"/>
+  <circle cx="290" cy="160" r="8" fill="#f59e0b" stroke="#ffffff" stroke-width="2"/>
+  <circle cx="400" cy="90" r="14" fill="#f43f5e" stroke="#ffffff" stroke-width="4"/>
+
+  <!-- Tobler / Minetti Isochrone Rings -->
+  <ellipse cx="400" cy="90" rx="35" ry="18" fill="none" stroke="#f43f5e" stroke-width="2" opacity="0.6" stroke-dasharray="4,4"/>
+
+  <!-- Badge -->
+  <rect x="156" y="405" width="200" height="42" rx="21" fill="#0f172a" stroke="url(#glow)" stroke-width="3"/>
+  <text x="256" y="432" font-family="'Plus Jakarta Sans', 'Inter', sans-serif" font-size="17" font-weight="800" fill="#fb7185" text-anchor="middle" letter-spacing="1.5">3D &middot; KINEMATICS</text>
+</svg>
