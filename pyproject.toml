@@ -67,7 +67,8 @@ zero2route3d = "zero2route3d.cli:main"
 Homepage = "https://github.com/YusufEminoglu/zero2route3d_sdk"
 Repository = "https://github.com/YusufEminoglu/zero2route3d_sdk"
 Issues = "https://github.com/YusufEminoglu/zero2route3d_sdk/issues"
-Documentation = "https://yusufeminoglu.github.io/zero2route3d/"
+Documentation = "https://yusufeminoglu.github.io/zero2route3d_sdk/"
+Changelog = "https://github.com/YusufEminoglu/zero2route3d_sdk/blob/main/CHANGELOG.md"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
