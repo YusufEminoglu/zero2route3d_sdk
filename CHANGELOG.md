@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.10.0] - 2026-08-30
+### Added
+- **Freight & High-Speed Rail Adhesion Limits Simulator (`rail_gradient_adhesion_limits.py`)**: Added `evaluate_rail_tractive_adhesion` calculating Curtius-Kniffler wheel-rail friction limits, grade climbability, and slip risk.
+- **Multi-Truck Autonomous Platooning Fuel Simulator (`autonomous_platooning_fuel_savings.py`)**: Added `simulate_truck_platooning_benefits` modeling aerodynamic drag reduction, diesel fuel economy, and CO2 abatement.
+
 ## [0.9.0] - 2026-08-30
 ### Added
 - **Emergency Helicopter Air Ambulance (HEMS) 3D Landing Zone Evaluator (`emergency_air_ambulance_landing.py`)**: Added `evaluate_helicopter_landing_zones` assessing 1:8 slope obstacle intrusion surfaces and safe approach headings.

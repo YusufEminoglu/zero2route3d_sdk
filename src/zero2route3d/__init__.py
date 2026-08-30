@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-__version__ = "0.9.0"
+__version__ = "0.10.0"
 __author__ = "Yusuf Eminoğlu"
 __email__ = "yusufeminoglu@gmail.com"
 
@@ -24,11 +24,22 @@ from .aquaplaning_hydroplaning_risk import (
     PavementCrossSlopeProfile,
     evaluate_road_hydroplaning_risk,
 )
+from .autonomous_platooning_fuel_savings import (
+    PlatoonAerodynamicConfig,
+    PlatoonFuelResult,
+    simulate_truck_platooning_benefits,
+)
 from .basemap import add_osm_basemap
 from .biomechanics import (
     BiomechanicalKinematicsTracker,
     BiomechanicalSegmentResult,
     BiomechanicalTrailSummary,
+)
+from .rail_gradient_adhesion_limits import (
+    LocomotiveTractionProfile,
+    RailAdhesionResult,
+    RailSurfaceCondition,
+    evaluate_rail_tractive_adhesion,
 )
 from .copernicus_dem import CopernicusDemError, CopernicusDemTileSource
 from .co2_emission_routing import (
@@ -372,4 +383,13 @@ __all__ = [
     "evaluate_road_hydroplaning_risk",
     "HydroplaningRiskResult",
     "PavementCrossSlopeProfile",
+    # Rail Gradient & Wheel-Rail Adhesion Limits
+    "evaluate_rail_tractive_adhesion",
+    "RailAdhesionResult",
+    "LocomotiveTractionProfile",
+    "RailSurfaceCondition",
+    # Autonomous Truck Aerodynamic Platooning
+    "simulate_truck_platooning_benefits",
+    "PlatoonFuelResult",
+    "PlatoonAerodynamicConfig",
 ]
