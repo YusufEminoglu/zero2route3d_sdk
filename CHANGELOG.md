@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.12.0] - 2026-08-30
+### Added
+- **Alpine Ski Resort Piste Gradient Classifier & Gravity Router (`ski_resort_piste_gradient_routing.py`)**: Added `classify_ski_pistes_and_route` analyzing slope steepness, FIS difficulty grading (Green/Blue/Red/Black), and gravity downhill trajectories.
+- **Hydrofoil Marine Dynamic Foil Lift & Bathymetric Router (`hydrofoil_marine_routing_shallow_water.py`)**: Added `simulate_hydrofoil_marine_route` modeling hydrodynamic lift transition speeds, fuel savings, and under-keel clearance.
+
 ## [0.11.0] - 2026-08-30
 ### Added
 - **Road Tunnel Emergency Fire Smoke Dispersion Simulator (`tunnel_ventilation_smoke_dispersion.py`)**: Added `simulate_tunnel_smoke_dispersion` computing Danziger-Kennedy / NFPA 502 critical backlayering velocity and jet fan requirements.

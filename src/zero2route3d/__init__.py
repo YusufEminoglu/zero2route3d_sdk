@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-__version__ = "0.11.0"
+__version__ = "0.12.0"
 __author__ = "Yusuf Eminoğlu"
 __email__ = "yusufeminoglu@gmail.com"
 
@@ -35,6 +35,11 @@ from .biomechanics import (
     BiomechanicalSegmentResult,
     BiomechanicalTrailSummary,
 )
+from .hydrofoil_marine_routing_shallow_water import (
+    HydrofoilRouteResult,
+    HydrofoilVesselProfile,
+    simulate_hydrofoil_marine_route,
+)
 from .hyperloop_evacuated_tube_aerodynamics import (
     HyperloopAeroResult,
     TubeBlockageConfig,
@@ -45,6 +50,11 @@ from .rail_gradient_adhesion_limits import (
     RailAdhesionResult,
     RailSurfaceCondition,
     evaluate_rail_tractive_adhesion,
+)
+from .ski_resort_piste_gradient_routing import (
+    PisteDifficultyProfile,
+    SkiPisteRouteResult,
+    classify_ski_pistes_and_route,
 )
 from .tunnel_ventilation_smoke_dispersion import (
     JetFanVentilationProfile,
@@ -410,4 +420,12 @@ __all__ = [
     "simulate_hyperloop_pod_aerodynamics",
     "HyperloopAeroResult",
     "TubeBlockageConfig",
+    # Alpine Ski Resort Piste Gradient Classifier & Router
+    "classify_ski_pistes_and_route",
+    "SkiPisteRouteResult",
+    "PisteDifficultyProfile",
+    # Hydrofoil Marine Dynamic Foil Lift & Bathymetric Router
+    "simulate_hydrofoil_marine_route",
+    "HydrofoilRouteResult",
+    "HydrofoilVesselProfile",
 ]
