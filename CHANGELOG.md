@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.11.0] - 2026-08-30
+### Added
+- **Road Tunnel Emergency Fire Smoke Dispersion Simulator (`tunnel_ventilation_smoke_dispersion.py`)**: Added `simulate_tunnel_smoke_dispersion` computing Danziger-Kennedy / NFPA 502 critical backlayering velocity and jet fan requirements.
+- **Hyperloop Evacuated Tube Aerodynamics & Kantrowitz Limit (`hyperloop_evacuated_tube_aerodynamics.py`)**: Added `simulate_hyperloop_pod_aerodynamics` modeling choked flow Mach limits and sub-atmospheric tube drag forces.
+
 ## [0.10.0] - 2026-08-30
 ### Added
 - **Freight & High-Speed Rail Adhesion Limits Simulator (`rail_gradient_adhesion_limits.py`)**: Added `evaluate_rail_tractive_adhesion` calculating Curtius-Kniffler wheel-rail friction limits, grade climbability, and slip risk.

@@ -4,11 +4,11 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "zero2route3d-sdk"
-version = "0.10.0"
+version = "0.11.0"
 authors = [
     { name = "Yusuf Eminoğlu", email = "yusufeminoglu@gmail.com" }
 ]
-description = "Headless 3D mobility, Rail Adhesion Limits & Autonomous Truck Platooning Fuel Suite."
+description = "Headless 3D mobility, Tunnel Smoke Dispersion & Hyperloop Tube Aerodynamics Suite."
 keywords = [
     "gis",
     "routing",

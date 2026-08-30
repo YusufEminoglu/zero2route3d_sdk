@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-__version__ = "0.10.0"
+__version__ = "0.11.0"
 __author__ = "Yusuf Eminoğlu"
 __email__ = "yusufeminoglu@gmail.com"
 
@@ -35,11 +35,21 @@ from .biomechanics import (
     BiomechanicalSegmentResult,
     BiomechanicalTrailSummary,
 )
+from .hyperloop_evacuated_tube_aerodynamics import (
+    HyperloopAeroResult,
+    TubeBlockageConfig,
+    simulate_hyperloop_pod_aerodynamics,
+)
 from .rail_gradient_adhesion_limits import (
     LocomotiveTractionProfile,
     RailAdhesionResult,
     RailSurfaceCondition,
     evaluate_rail_tractive_adhesion,
+)
+from .tunnel_ventilation_smoke_dispersion import (
+    JetFanVentilationProfile,
+    TunnelSmokeSafetyResult,
+    simulate_tunnel_smoke_dispersion,
 )
 from .copernicus_dem import CopernicusDemError, CopernicusDemTileSource
 from .co2_emission_routing import (
@@ -392,4 +402,12 @@ __all__ = [
     "simulate_truck_platooning_benefits",
     "PlatoonFuelResult",
     "PlatoonAerodynamicConfig",
+    # Road Tunnel Emergency Fire Smoke Dispersion (NFPA 502)
+    "simulate_tunnel_smoke_dispersion",
+    "TunnelSmokeSafetyResult",
+    "JetFanVentilationProfile",
+    # Hyperloop Evacuated Tube Aerodynamics & Kantrowitz Limit
+    "simulate_hyperloop_pod_aerodynamics",
+    "HyperloopAeroResult",
+    "TubeBlockageConfig",
 ]
