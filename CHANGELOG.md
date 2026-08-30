@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.9.0] - 2026-08-30
+### Added
+- **Emergency Helicopter Air Ambulance (HEMS) 3D Landing Zone Evaluator (`emergency_air_ambulance_landing.py`)**: Added `evaluate_helicopter_landing_zones` assessing 1:8 slope obstacle intrusion surfaces and safe approach headings.
+- **Highway Hydroplaning & Water Film Depth Risk Simulator (`aquaplaning_hydroplaning_risk.py`)**: Added `evaluate_road_hydroplaning_risk` modeling Gallaway water film accumulation and dynamic critical hydroplaning speed.
+
 ## [0.8.0] - 2026-08-30
 ### Added
 - **Heavy Vehicle Powertrain Coolant Thermal Soak Simulator (`thermal_engine_heat_soak.py`)**: Added `simulate_powertrain_thermal_load` computing coolant temperature rise, fan activation times, and thermal stress on steep mountain climbs.

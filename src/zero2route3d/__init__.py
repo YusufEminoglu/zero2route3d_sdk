@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-__version__ = "0.8.0"
+__version__ = "0.9.0"
 __author__ = "Yusuf Eminoğlu"
 __email__ = "yusufeminoglu@gmail.com"
 
@@ -18,6 +18,11 @@ from .api import (
     solve_3d_isochrones,
     solve_3d_route,
     solve_4d_pareto_frontier,
+)
+from .aquaplaning_hydroplaning_risk import (
+    HydroplaningRiskResult,
+    PavementCrossSlopeProfile,
+    evaluate_road_hydroplaning_risk,
 )
 from .basemap import add_osm_basemap
 from .biomechanics import (
@@ -37,6 +42,11 @@ from .drone_airspace_corridor import (
     DroneAirspaceProfile,
     GeofencedNoFlyZone,
     solve_3d_drone_flight_corridor,
+)
+from .emergency_air_ambulance_landing import (
+    HelicopterApproachSlope,
+    LandingZoneResult,
+    evaluate_helicopter_landing_zones,
 )
 from .environmental_raster import EnvironmentalSurfaceSampler, MCDAWeights
 from .ev_energy import (
@@ -354,4 +364,12 @@ __all__ = [
     "DynamicIsochroneResult",
     "DynamicIsochroneRing",
     "HourlyCongestionFactor",
+    # Emergency Air Ambulance 3D Landing Zone
+    "evaluate_helicopter_landing_zones",
+    "LandingZoneResult",
+    "HelicopterApproachSlope",
+    # Pavement Hydroplaning & Water Film Depth
+    "evaluate_road_hydroplaning_risk",
+    "HydroplaningRiskResult",
+    "PavementCrossSlopeProfile",
 ]
