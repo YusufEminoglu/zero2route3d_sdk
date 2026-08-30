@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-__version__ = "0.2.0"
+__version__ = "0.8.0"
 __author__ = "Yusuf Eminoğlu"
 __email__ = "yusufeminoglu@gmail.com"
 
@@ -20,10 +20,90 @@ from .api import (
     solve_4d_pareto_frontier,
 )
 from .basemap import add_osm_basemap
+from .biomechanics import (
+    BiomechanicalKinematicsTracker,
+    BiomechanicalSegmentResult,
+    BiomechanicalTrailSummary,
+)
 from .copernicus_dem import CopernicusDemError, CopernicusDemTileSource
+from .co2_emission_routing import (
+    EmissionAssessmentResult,
+    VehicleEmissionProfile,
+    calculate_route_co2_emissions,
+)
 from .dem_fetcher import NODATA, GlobalDemFetcher
+from .drone_airspace_corridor import (
+    AirCorridorResult,
+    DroneAirspaceProfile,
+    GeofencedNoFlyZone,
+    solve_3d_drone_flight_corridor,
+)
 from .environmental_raster import EnvironmentalSurfaceSampler, MCDAWeights
+from .ev_energy import (
+    EVBatteryProfile,
+    EVEnergySimulator,
+    EVRouteEnergyResult,
+    EVSegmentEnergy,
+    solve_ev_energy_route,
+)
 from .evacuation import EvacuationPlan, EvacuationRouter, HazardZone
+from .gradient_braking_safety import (
+    BrakeThermalProfile,
+    DescentSafetyResult,
+    evaluate_steep_descent_brake_fade,
+)
+from .hazard_evacuation import (
+    DynamicHazardZone,
+    EvacuationPath3D,
+    EvacuationRouteResult,
+    solve_3d_evacuation_routes,
+)
+from .heavy_haulage_swept_path import (
+    SuperloadVehicleProfile,
+    SweptPathResult,
+    calculate_swept_path_envelope,
+)
+from .html_bundler import StandaloneHtmlBundler
+from .micromobility_kinetics import (
+    MicroMobilityRouteScore,
+    VibrationalComfortResult,
+    evaluate_micro_mobility_comfort,
+)
+from .transit_gtfs import (
+    GTFSFeedReader,
+    GTFSRoute,
+    GTFSStop,
+    TimetableTransitRouter,
+    TransitJourneyResult,
+    TransitLeg,
+)
+from .thermal_engine_heat_soak import (
+    EngineHeatProfile,
+    PowertrainThermalResult,
+    simulate_powertrain_thermal_load,
+)
+from .time_dependent_isochrones import (
+    DynamicIsochroneRing,
+    DynamicIsochroneResult,
+    HourlyCongestionFactor,
+    solve_time_dependent_isochrones,
+)
+from .truck_clearance import (
+    BridgeClearanceObstacle,
+    TruckRestrictionProfile,
+    TruckRouteFeasibilityResult,
+    solve_heavy_vehicle_route3d,
+)
+from .voice_guidance import (
+    ManeuverInstruction3D,
+    TurnByTurn3DRouteGuide,
+    generate_3d_turn_by_turn_cues,
+)
+from .weather_routing import (
+    HeadwindResistanceResult,
+    WeatherRouteSummary,
+    compute_apparent_wind_resistance,
+)
 from .html_bundler import StandaloneHtmlBundler
 from .integrations import (
     from_geodataframe,
@@ -209,4 +289,69 @@ __all__ = [
     "RoutingEngine3D",
     "Waypoint",
     "solve_tsp_order",
+    # Electric Vehicle 3D Powertrain & Energy
+    "EVBatteryProfile",
+    "EVEnergySimulator",
+    "EVRouteEnergyResult",
+    "EVSegmentEnergy",
+    "solve_ev_energy_route",
+    # Dynamic GTFS Timetable Transit Router
+    "GTFSFeedReader",
+    "GTFSStop",
+    "GTFSRoute",
+    "TimetableTransitRouter",
+    "TransitJourneyResult",
+    "TransitLeg",
+    # Micro-Mobility Kinetics
+    "evaluate_micro_mobility_comfort",
+    "MicroMobilityRouteScore",
+    "VibrationalComfortResult",
+    # Weather Routing
+    "compute_apparent_wind_resistance",
+    "WeatherRouteSummary",
+    "HeadwindResistanceResult",
+    # Biomechanics
+    "BiomechanicalKinematicsTracker",
+    "BiomechanicalTrailSummary",
+    "BiomechanicalSegmentResult",
+    # Voice Guidance
+    "generate_3d_turn_by_turn_cues",
+    "TurnByTurn3DRouteGuide",
+    "ManeuverInstruction3D",
+    # Dynamic Hazard Evacuation
+    "solve_3d_evacuation_routes",
+    "EvacuationRouteResult",
+    "EvacuationPath3D",
+    "DynamicHazardZone",
+    # 3D Truck Clearance Router
+    "solve_heavy_vehicle_route3d",
+    "TruckRouteFeasibilityResult",
+    "TruckRestrictionProfile",
+    "BridgeClearanceObstacle",
+    # 3D Drone Flight Air Corridor Router
+    "solve_3d_drone_flight_corridor",
+    "AirCorridorResult",
+    "DroneAirspaceProfile",
+    "GeofencedNoFlyZone",
+    # Downhill Brake Fade & Runaway Safety
+    "evaluate_steep_descent_brake_fade",
+    "DescentSafetyResult",
+    "BrakeThermalProfile",
+    # Superload Swept Path Envelope
+    "calculate_swept_path_envelope",
+    "SweptPathResult",
+    "SuperloadVehicleProfile",
+    # Eco-Routing & CO2 Emissions
+    "calculate_route_co2_emissions",
+    "EmissionAssessmentResult",
+    "VehicleEmissionProfile",
+    # Powertrain Thermal Soak Simulator
+    "simulate_powertrain_thermal_load",
+    "PowertrainThermalResult",
+    "EngineHeatProfile",
+    # Time-Dependent Dynamic Isochrones
+    "solve_time_dependent_isochrones",
+    "DynamicIsochroneResult",
+    "DynamicIsochroneRing",
+    "HourlyCongestionFactor",
 ]

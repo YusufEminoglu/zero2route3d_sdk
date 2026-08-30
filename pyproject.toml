@@ -4,11 +4,11 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "zero2route3d-sdk"
-version = "0.2.0"
+version = "0.8.0"
 authors = [
     { name = "Yusuf Eminoğlu", email = "yusufeminoglu@gmail.com" }
 ]
-description = "Headless 3D spatial mobility, biomechanical human kinematics, and multi-criteria routing engine."
+description = "Headless 3D mobility, Powertrain Thermal Soak & Time-Dependent 4D Isochrones Suite."
 keywords = [
     "gis",
     "routing",
