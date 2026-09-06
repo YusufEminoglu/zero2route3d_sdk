@@ -6,17 +6,17 @@
 
 # zero2route3d-sdk
 
-[![CI](https://github.com/YusufEminoglu/zero2route3d_sdk/actions/workflows/ci.yml/badge.svg)](https://github.com/YusufEminoglu/zero2route3d_sdk/actions/workflows/ci.yml)
+[![CI](https://gitlab.com/geospacephilo/zero2route3d_sdk/actions/workflows/ci.yml/badge.svg)](https://gitlab.com/geospacephilo/zero2route3d_sdk/actions/workflows/ci.yml)
 [![PyPI version](https://img.shields.io/pypi/v/zero2route3d-sdk.svg?color=10b981)](https://pypi.org/project/zero2route3d-sdk/)
 [![Python version support](https://img.shields.io/pypi/pyversions/zero2route3d-sdk.svg?color=3b82f6)](https://pypi.org/project/zero2route3d-sdk/)
-[![Documentation](https://img.shields.io/badge/docs-GitHub%20Pages-06b6d4.svg)](https://yusufeminoglu.github.io/zero2route3d_sdk/)
+[![Documentation](https://img.shields.io/badge/docs-GitLab%20Pages-06b6d4.svg)](https://yusufeminoglu.github.io/zero2route3d_sdk/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Code style: Ruff](https://img.shields.io/badge/code%20style-ruff-D7FF64.svg)](https://docs.astral.sh/ruff/)
 [![Test Coverage](https://img.shields.io/badge/coverage-95%25%2B-brightgreen.svg)](#-development--testing)
 
 **Headless 3D Spatial Mobility, Biomechanical Human Kinematics, Metabolic Energy Modeling, and Multi-Criteria Routing Analytics.**
 
-[📖 **Open Interactive Web Manual (GitHub Pages)**](https://yusufeminoglu.github.io/zero2route3d_sdk/) • [📦 **PyPI Package**](https://pypi.org/project/zero2route3d-sdk/) • [🐛 **Issue Tracker**](https://github.com/YusufEminoglu/zero2route3d_sdk/issues)
+[📖 **Open Interactive Web Manual (GitLab Pages)**](https://yusufeminoglu.github.io/zero2route3d_sdk/) • [📦 **PyPI Package**](https://pypi.org/project/zero2route3d-sdk/) • [🐛 **Issue Tracker**](https://gitlab.com/geospacephilo/zero2route3d_sdk/-/issues)
 
 </div>
 
@@ -220,7 +220,7 @@ Vectorized execution times on standard urban transport networks:
 
 ```bash
 # Clone repository and install in editable mode
-git clone https://github.com/YusufEminoglu/zero2route3d_sdk.git
+git clone https://gitlab.com/geospacephilo/zero2route3d_sdk.git
 cd zero2route3d_sdk
 pip install -e ".[dev]"
 
@@ -246,7 +246,7 @@ If you use **zero2route3d-sdk** in scientific research, transportation planning 
   year      = {2026},
   publisher = {PyPI - Python Package Index},
   version   = {0.2.0},
-  url       = {https://github.com/YusufEminoglu/zero2route3d_sdk}
+  url       = {https://gitlab.com/geospacephilo/zero2route3d_sdk}
 }
 ```
 
