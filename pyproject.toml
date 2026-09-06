@@ -67,7 +67,7 @@ zero2route3d = "zero2route3d.cli:main"
 Homepage = "https://geophilo.com/"
 Repository = "https://gitlab.com/geospacephilo/zero2route3d_sdk"
 Issues = "https://gitlab.com/geospacephilo/zero2route3d_sdk/-/issues"
-Documentation = "https://geophilo.com/"
+Documentation = "https://geophilo.com/zero2route3d_sdk/"
 Changelog = "https://gitlab.com/geospacephilo/zero2route3d_sdk/-/blob/main/CHANGELOG.md"
 
 [tool.setuptools]

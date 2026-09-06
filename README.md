@@ -9,14 +9,14 @@
 
 [![PyPI version](https://img.shields.io/pypi/v/zero2route3d-sdk.svg?color=10b981)](https://pypi.org/project/zero2route3d-sdk/)
 [![Python version support](https://img.shields.io/pypi/pyversions/zero2route3d-sdk.svg?color=3b82f6)](https://pypi.org/project/zero2route3d-sdk/)
-[![Documentation](https://img.shields.io/badge/docs-GEOPHILO-10b981.svg)](https://geophilo.com/)
+[![Documentation](https://img.shields.io/badge/docs-GEOPHILO-10b981.svg)](https://geophilo.com/zero2route3d_sdk/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Code style: Ruff](https://img.shields.io/badge/code%20style-ruff-D7FF64.svg)](https://docs.astral.sh/ruff/)
 [![Test Coverage](https://img.shields.io/badge/coverage-95%25%2B-brightgreen.svg)](#-development--testing)
 
 **Headless 3D Spatial Mobility, Biomechanical Human Kinematics, Metabolic Energy Modeling, and Multi-Criteria Routing Analytics.**
 
-[📖 **Open Interactive Web Manual (GitLab Pages)**](https://geophilo.com/) • [📦 **PyPI Package**](https://pypi.org/project/zero2route3d-sdk/) • [🐛 **Issue Tracker**](https://gitlab.com/geospacephilo/zero2route3d_sdk/-/issues)
+[📖 **Open Interactive Web Manual**](https://geophilo.com/zero2route3d_sdk/) • [📦 **PyPI Package**](https://pypi.org/project/zero2route3d-sdk/) • [🐛 **Issue Tracker**](https://gitlab.com/geospacephilo/zero2route3d_sdk/-/issues)
 
 </div>
 
