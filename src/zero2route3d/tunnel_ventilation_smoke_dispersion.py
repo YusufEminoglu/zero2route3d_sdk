@@ -4,8 +4,8 @@
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass, field
-from typing import Any, Sequence
+from dataclasses import dataclass
+from typing import Any
 
 
 @dataclass
@@ -43,7 +43,7 @@ def simulate_tunnel_smoke_dispersion(
     available_thrust_per_fan_n: float = 850.0,  # Standard reversible tunnel jet fan
 ) -> TunnelSmokeSafetyResult:
     """Compute NFPA 502 / Danziger-Kennedy critical air velocity to prevent toxic smoke backlayering during tunnel vehicle fires.
-    
+
     Critical Velocity Formula (Kennedy / NFPA 502):
     v_crit = K_g * ( (g * H * Q_fire) / (rho * C_p * A * T_f) )^(1/3)
     where K_g = 1 + 0.03 * grade_pct

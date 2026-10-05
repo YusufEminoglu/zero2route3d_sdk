@@ -4,8 +4,8 @@
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass, field
-from typing import Any, Sequence
+from dataclasses import dataclass
+from typing import Any
 
 
 @dataclass
@@ -43,7 +43,7 @@ def simulate_hyperloop_pod_aerodynamics(
     ambient_temperature_k: float = 293.15,
 ) -> HyperloopAeroResult:
     """Compute Kantrowitz aerodynamic limit and low-pressure pod drag forces in evacuated transport tubes.
-    
+
     Kantrowitz Limit Mach Number M_kan:
     A_bypass / A_tube = (1 - BR)
     M_kan = [ (2 / (gamma - 1)) * ( (1 / (1 - BR))^((gamma - 1)/gamma) - 1 ) ]^0.5

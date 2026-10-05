@@ -4,8 +4,8 @@
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass, field
-from typing import Any, Sequence
+from dataclasses import dataclass
+from typing import Any
 
 
 @dataclass
@@ -42,7 +42,7 @@ def simulate_truck_platooning_benefits(
     diesel_price_usd_per_liter: float = 1.35,
 ) -> PlatoonFuelResult:
     """Compute CFD aerodynamic drag reduction coefficients and diesel fuel economy yield in Cooperative ACC platoons.
-    
+
     Aerodynamic drag reduction delta_Cd vs gap d (meters):
     - Lead truck: receives base pressure wake push -> ~4-7% savings at 10-15m gap
     - Follower trucks: drafting slipstream -> ~10-18% savings at 10-15m gap

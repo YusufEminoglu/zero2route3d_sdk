@@ -9,7 +9,6 @@ from zero2route3d import (
     AirCorridorResult,
     BrakeThermalProfile,
     DescentSafetyResult,
-    DroneAirspaceProfile,
     evaluate_steep_descent_brake_fade,
     solve_3d_drone_flight_corridor,
 )

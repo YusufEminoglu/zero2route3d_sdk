@@ -4,8 +4,8 @@
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass, field
-from typing import Any, Sequence
+from dataclasses import dataclass
+from typing import Any
 
 
 @dataclass
@@ -43,10 +43,10 @@ def evaluate_road_hydroplaning_risk(
     pavement: PavementCrossSlopeProfile | None = None,
 ) -> HydroplaningRiskResult:
     """Compute pavement water film thickness (Gallaway formula) and AASHTO dynamic hydroplaning speed threshold.
-    
+
     Gallaway Formula for Water Film Thickness (WFT in mm):
     WFT = 0.00338 * (TXD^0.11) * (L^0.43) * (I^0.59) * (S^-0.42) - TXD
-    
+
     Critical Hydroplaning Speed (Horne / Gallaway):
     V_p = 6.35 * sqrt(Tire_Pressure_kPa) * (Tread_Factor)
     """

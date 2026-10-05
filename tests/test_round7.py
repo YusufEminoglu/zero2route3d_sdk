@@ -8,7 +8,6 @@ import unittest
 from zero2route3d import (
     DynamicIsochroneResult,
     EngineHeatProfile,
-    HourlyCongestionFactor,
     PowertrainThermalResult,
     simulate_powertrain_thermal_load,
     solve_time_dependent_isochrones,
