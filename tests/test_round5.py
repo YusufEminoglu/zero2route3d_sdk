@@ -18,9 +18,7 @@ class TestZero2Route3DRound5(unittest.TestCase):
     def test_drone_airspace_flight_corridor(self) -> None:
         p_start = (0.0, 0.0, 10.0)
         p_end = (1000.0, 0.0, 15.0)
-        obstacles = [
-            {"bbox": (400.0, -50.0, 600.0, 50.0), "height": 45.0}
-        ]
+        obstacles = [{"bbox": (400.0, -50.0, 600.0, 50.0), "height": 45.0}]
 
         corridor = solve_3d_drone_flight_corridor(p_start, p_end, obstacles)
         self.assertIsInstance(corridor, AirCorridorResult)

@@ -24,6 +24,7 @@ class RasterSourceError(RuntimeError):
 
 
 def _finite(value: Any) -> Optional[float]:
+    """Convert ``value`` to a finite float, returning None when that is impossible."""
     try:
         number = float(value)
     except (TypeError, ValueError, OverflowError):
@@ -46,6 +47,13 @@ class GeoTiffRasterSource:
         band: int = 1,
         nodata: Optional[float] = None,
     ) -> None:
+        """Create a lazily opened raster source.
+
+        Args:
+            path: Filesystem path to the raster file.
+            band: One-based band index to sample.
+            nodata: Explicit NoData value; when None the raster metadata is used.
+        """
         self.path = Path(path)
         self.band = max(1, int(band))
         self._explicit_nodata = _finite(nodata)
@@ -58,6 +66,7 @@ class GeoTiffRasterSource:
     # -- lifecycle ---------------------------------------------------------
 
     def _open(self) -> Any:
+        """Open the raster on first use and return the cached dataset handle."""
         if self._dataset is not None:
             return self._dataset
         if self._closed:
@@ -97,18 +106,22 @@ class GeoTiffRasterSource:
         self._closed = True
 
     def __enter__(self) -> GeoTiffRasterSource:
+        """Open the raster and return this source for use in a ``with`` block."""
         self._open()
         return self
 
     def __exit__(self, *_exc: object) -> None:
+        """Close the underlying dataset when leaving a ``with`` block."""
         self.close()
 
     def __repr__(self) -> str:
+        """Return a concise debug representation of the source."""
         return f"GeoTiffRasterSource(path={str(self.path)!r}, band={self.band})"
 
     # -- coordinates -------------------------------------------------------
 
     def _to_raster_crs(self, coords: Sequence[Tuple[float, float]]) -> List[Tuple[float, float]]:
+        """Reproject WGS84 coordinates into the raster's native CRS when needed."""
         dataset = self._open()
         if self._needs_reprojection is None:
             crs = dataset.crs

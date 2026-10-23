@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.12.1] - 2026-10-23
+### Added
+- **Public utility test coverage** (`tests/test_public_utilities.py`): 23 tests covering input validation, Copernicus tile helpers, the TSP solver, QML/HTML export, and the local HTTP server lifecycle.
+- **Test environment bootstrap** (`tests/conftest.py`): repairs a broken `PROJ_LIB` by pointing it at rasterio's bundled `proj_data`, so GeoTIFF tests run instead of skipping.
+
+### Fixed
+- **Ephemeral ports in `Route3DLocalServer`**: `start()` now reports the port actually bound by the HTTP server when `port=0` is requested.
+- **README examples**: profile catalog, map-matching, Pareto and route snippets now match the real public API and field names; added installation, feature overview and API reference sections.
+- **Documentation coverage badge**: now reflects the measured suite coverage.
+
 ## [0.12.0] - 2026-08-30
 ### Added
 - **Alpine Ski Resort Piste Gradient Classifier & Gravity Router (`ski_resort_piste_gradient_routing.py`)**: Added `classify_ski_pistes_and_route` analyzing slope steepness, FIS difficulty grading (Green/Blue/Red/Black), and gravity downhill trajectories.

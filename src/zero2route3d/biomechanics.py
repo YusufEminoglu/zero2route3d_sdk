@@ -33,6 +33,7 @@ class BiomechanicalTrailSummary:
     segments: list[BiomechanicalSegmentResult]
 
     def to_dict(self) -> dict[str, Any]:
+        """Return the biomechanical trail summary as a JSON-serialisable dictionary."""
         return {
             "total_distance_km": round(self.total_distance_km, 3),
             "elevation_gain_m": round(self.total_elevation_gain_m, 1),
@@ -51,14 +52,7 @@ def _minetti_cost_of_running(slope_fraction: float) -> float:
     C_r(i) = 155.4 * i^5 - 30.4 * i^4 - 43.3 * i^3 + 46.3 * i^2 + 19.5 * i + 3.6
     """
     i = max(-0.45, min(0.45, slope_fraction))
-    cost = (
-        155.4 * (i ** 5)
-        - 30.4 * (i ** 4)
-        - 43.3 * (i ** 3)
-        + 46.3 * (i ** 2)
-        + 19.5 * i
-        + 3.6
-    )
+    cost = 155.4 * (i**5) - 30.4 * (i**4) - 43.3 * (i**3) + 46.3 * (i**2) + 19.5 * i + 3.6
     return max(1.8, cost)
 
 
@@ -72,6 +66,14 @@ class BiomechanicalKinematicsTracker:
         athlete_age: int = 32,
         resting_hr_bpm: int = 55,
     ) -> None:
+        """Create a biomechanical tracker for one athlete.
+
+        Args:
+            athlete_mass_kg: Body mass of the athlete in kilograms.
+            pack_weight_kg: Additional carried equipment mass in kilograms.
+            athlete_age: Age in years, used to estimate maximum heart rate.
+            resting_hr_bpm: Resting heart rate in beats per minute.
+        """
         self.mass = athlete_mass_kg
         self.pack = pack_weight_kg
         self.total_mass = self.mass + self.pack
@@ -84,9 +86,20 @@ class BiomechanicalKinematicsTracker:
         waypoints_3d: Sequence[tuple[float, float, float]],
         base_speed_kmh: float = 5.2,
     ) -> BiomechanicalTrailSummary:
+        """Analyse a 3D trail and summarise energy, METs and cardiac load.
+
+        Args:
+            waypoints_3d: Ordered ``(lon, lat, elevation)`` trail coordinates.
+            base_speed_kmh: Flat-ground reference speed in km/h.
+
+        Returns:
+            Aggregate trail summary with per-segment biomechanical results.
+        """
         n = len(waypoints_3d)
         if n < 2:
-            return BiomechanicalTrailSummary(0.0, 0.0, 0.0, 0.0, 0.0, self.hr_rest, self.hr_rest, {}, [])
+            return BiomechanicalTrailSummary(
+                0.0, 0.0, 0.0, 0.0, 0.0, self.hr_rest, self.hr_rest, {}, []
+            )
 
         tot_dist_m = 0.0
         elev_gain = 0.0
@@ -96,7 +109,13 @@ class BiomechanicalKinematicsTracker:
         met_list: list[float] = []
         segments: list[BiomechanicalSegmentResult] = []
 
-        zone_counts = {"Z1_Warmup": 0, "Z2_Aerobic": 0, "Z3_Tempo": 0, "Z4_Threshold": 0, "Z5_Anaerobic": 0}
+        zone_counts = {
+            "Z1_Warmup": 0,
+            "Z2_Aerobic": 0,
+            "Z3_Tempo": 0,
+            "Z4_Threshold": 0,
+            "Z5_Anaerobic": 0,
+        }
 
         for idx in range(n - 1):
             p1 = waypoints_3d[idx]
@@ -106,7 +125,7 @@ class BiomechanicalKinematicsTracker:
             dy = p2[1] - p1[1]
             dz = p2[2] - p1[2]
             d_horiz = math.hypot(dx, dy)
-            d_3d = math.sqrt(d_horiz ** 2 + dz ** 2)
+            d_3d = math.sqrt(d_horiz**2 + dz**2)
             if d_3d <= 1e-4:
                 continue
 

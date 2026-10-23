@@ -36,7 +36,9 @@ class TestZero2Route3DRound6(unittest.TestCase):
         path = [(0.0, 0.0, 10.0), (500.0, 0.0, 20.0), (1000.0, 0.0, 50.0)]
         prof = VehicleEmissionProfile(curb_weight_kg=1800.0)
 
-        emissions = calculate_route_co2_emissions(path, average_speed_kmh=70.0, vehicle_profile=prof)
+        emissions = calculate_route_co2_emissions(
+            path, average_speed_kmh=70.0, vehicle_profile=prof
+        )
 
         self.assertIsInstance(emissions, EmissionAssessmentResult)
         self.assertGreater(emissions.total_co2_kg, 0.0)

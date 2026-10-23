@@ -17,7 +17,9 @@ from zero2route3d import (
 
 class TestZero2Route3DRound10(unittest.TestCase):
     def test_tunnel_ventilation_smoke_dispersion(self) -> None:
-        prof = JetFanVentilationProfile(tunnel_cross_section_area_m2=60.0, fire_heat_release_rate_mw=25.0)
+        prof = JetFanVentilationProfile(
+            tunnel_cross_section_area_m2=60.0, fire_heat_release_rate_mw=25.0
+        )
         res = simulate_tunnel_smoke_dispersion(tunnel_length_m=1500.0, ventilation=prof)
 
         self.assertIsInstance(res, TunnelSmokeSafetyResult)
@@ -31,7 +33,9 @@ class TestZero2Route3DRound10(unittest.TestCase):
         self.assertIn("jet_fans_needed", d)
 
     def test_hyperloop_evacuated_tube_aerodynamics(self) -> None:
-        cfg = TubeBlockageConfig(tube_internal_diameter_m=4.0, pod_frontal_area_m2=3.5, pod_cruising_speed_kmh=800.0)
+        cfg = TubeBlockageConfig(
+            tube_internal_diameter_m=4.0, pod_frontal_area_m2=3.5, pod_cruising_speed_kmh=800.0
+        )
         res = simulate_hyperloop_pod_aerodynamics(cfg)
 
         self.assertIsInstance(res, HyperloopAeroResult)

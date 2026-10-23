@@ -29,6 +29,7 @@ class SweptPathResult:
     inner_swept_envelope_polygon: list[tuple[float, float]]
 
     def to_dict(self) -> dict[str, Any]:
+        """Return the swept path envelope as a JSON-serialisable dictionary."""
         return {
             "negotiable": self.is_path_negotiable,
             "max_swept_width_m": round(self.max_swept_width_m, 2),
@@ -106,8 +107,18 @@ def calculate_swept_path_envelope(
     if sl > 1e-4:
         nx = -dy / sl
         ny = dx / sl
-        outer_env.append((p_last[0] + nx * (veh.overall_width_m / 2.0), p_last[1] + ny * (veh.overall_width_m / 2.0)))
-        inner_env.append((p_last[0] - nx * (veh.overall_width_m / 2.0), p_last[1] - ny * (veh.overall_width_m / 2.0)))
+        outer_env.append(
+            (
+                p_last[0] + nx * (veh.overall_width_m / 2.0),
+                p_last[1] + ny * (veh.overall_width_m / 2.0),
+            )
+        )
+        inner_env.append(
+            (
+                p_last[0] - nx * (veh.overall_width_m / 2.0),
+                p_last[1] - ny * (veh.overall_width_m / 2.0),
+            )
+        )
 
     # Compute enclosed polygon area
     full_poly = outer_env + list(reversed(inner_env))
@@ -116,7 +127,7 @@ def calculate_swept_path_envelope(
         tot_area += full_poly[j][0] * full_poly[j + 1][1] - full_poly[j + 1][0] * full_poly[j][1]
     tot_area = abs(tot_area) * 0.5
 
-    negotiable = (encroachments == 0)
+    negotiable = encroachments == 0
 
     return SweptPathResult(
         is_path_negotiable=negotiable,

@@ -24,6 +24,7 @@ def export_route_to_dxf_3d(
     out_path = Path(target_path)
 
     def finite(value: Any, default: float = 0.0) -> float:
+        """Coerce a value to a finite float, falling back to ``default``."""
         try:
             number = float(value)
         except (TypeError, ValueError):

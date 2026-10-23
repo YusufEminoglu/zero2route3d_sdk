@@ -29,6 +29,7 @@ class DynamicIsochroneResult:
     rings: list[DynamicIsochroneRing]
 
     def to_dict(self) -> dict[str, Any]:
+        """Return the dynamic isochrone summary as a JSON-serialisable dictionary."""
         return {
             "departure_hour": self.departure_hour,
             "base_speed_kmh": round(self.freeflow_base_speed_kmh, 1),
@@ -49,13 +50,20 @@ def solve_time_dependent_isochrones(
     """Compute time-dependent dynamic isochrone reachability rings modulated by diurnal traffic congestion curves."""
     # Default diurnal congestion curve (1.0 = freeflow, 0.60 = rush hour)
     default_curve = {
-        7: 0.75, 8: 0.60, 9: 0.70,  # AM peak
-        12: 0.85, 13: 0.85,          # Lunch
-        17: 0.55, 18: 0.50, 19: 0.65 # PM peak
+        7: 0.75,
+        8: 0.60,
+        9: 0.70,  # AM peak
+        12: 0.85,
+        13: 0.85,  # Lunch
+        17: 0.55,
+        18: 0.50,
+        19: 0.65,  # PM peak
     }
 
     if hourly_congestion_profile:
-        profile_map = {cf.hour_of_day: cf.speed_reduction_factor for cf in hourly_congestion_profile}
+        profile_map = {
+            cf.hour_of_day: cf.speed_reduction_factor for cf in hourly_congestion_profile
+        }
         speed_factor = profile_map.get(departure_hour, 1.0)
     else:
         speed_factor = default_curve.get(departure_hour, 0.95)

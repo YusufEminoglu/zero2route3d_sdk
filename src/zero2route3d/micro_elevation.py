@@ -34,6 +34,11 @@ class BicubicSurfaceInterpolator:
     """Keys' 16-point Bicubic Convolution Kernel with C1 continuous derivatives."""
 
     def __init__(self, a: float = -0.5) -> None:
+        """Create a Keys bicubic interpolator.
+
+        Args:
+            a: Cubic convolution shaping parameter; ``-0.5`` is the Catmull-Rom spline.
+        """
         # a = -0.5 corresponds to the Catmull-Rom cubic spline
         self.a = a
 
@@ -112,6 +117,12 @@ class IDWSurfaceInterpolator:
     """Modified Shepard's Inverse Distance Weighting (IDW) with smoothing nugget."""
 
     def __init__(self, power: float = 2.0, smoothing_epsilon: float = 1e-6) -> None:
+        """Create an inverse-distance-weighting interpolator.
+
+        Args:
+            power: Distance weighting exponent.
+            smoothing_epsilon: Distances below this threshold return the known value.
+        """
         self.power = power
         self.epsilon = smoothing_epsilon
 
@@ -151,6 +162,11 @@ class MicroElevationEngine:
     """High-fidelity micro-elevation and profile reconstruction engine for QGIS."""
 
     def __init__(self, dem_layer: Optional[Any] = None) -> None:
+        """Create a micro-elevation engine.
+
+        Args:
+            dem_layer: Optional QGIS raster layer supplying the elevation surface.
+        """
         self.dem_layer = dem_layer
         self.bicubic = BicubicSurfaceInterpolator(a=-0.5)
         self.idw = IDWSurfaceInterpolator(power=2.0)

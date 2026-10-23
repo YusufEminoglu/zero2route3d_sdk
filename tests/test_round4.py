@@ -47,7 +47,7 @@ class TestZero2Route3DRound4(unittest.TestCase):
     def test_heavy_vehicle_truck_clearance(self) -> None:
         route_pts = [
             (0.0, 0.0, 10.0),
-            (500.0, 0.0, 10.0),   # Pass near obstacle
+            (500.0, 0.0, 10.0),  # Pass near obstacle
             (1000.0, 0.0, 30.0),  # Hill section
         ]
         obstacles = [

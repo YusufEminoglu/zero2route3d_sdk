@@ -155,10 +155,12 @@ class MobilityProfile:
         return length / speed_mps
 
     def to_dict(self) -> Dict[str, Any]:
+        """Return the mobility profile as a plain dictionary."""
         return asdict(self)
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> MobilityProfile:
+        """Build a mobility profile from a mapping produced by :meth:`to_dict`."""
         return cls(**data)
 
 

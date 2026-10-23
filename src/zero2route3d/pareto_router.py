@@ -53,6 +53,7 @@ class ParetoCostVector:
         return (c1 and c2 and c3 and c4) and strictly_better
 
     def add(self, delta: ParetoCostVector) -> ParetoCostVector:
+        """Return a new cost vector equal to this vector plus ``delta``."""
         return ParetoCostVector(
             time_s=self.time_s + delta.time_s,
             ascent_m=self.ascent_m + delta.ascent_m,
@@ -61,6 +62,7 @@ class ParetoCostVector:
         )
 
     def to_dict(self) -> Dict[str, float]:
+        """Return the cost vector as a JSON-serialisable dictionary."""
         return {
             "duration_min": round(self.time_s / 60.0, 1),
             "ascent_m": round(self.ascent_m, 1),
@@ -80,6 +82,7 @@ class ParetoRouteSolution:
     tradeoff_radar: Dict[str, float] = field(default_factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
+        """Return the Pareto route solution as a JSON-serialisable dictionary."""
         return {
             "label": self.label,
             "cost": self.cost.to_dict(),
@@ -104,6 +107,7 @@ class ParetoFrontierResult:
     profile_name: str
 
     def to_dict(self) -> Dict[str, Any]:
+        """Return the Pareto frontier result as a JSON-serialisable dictionary."""
         return {
             "solution_count": len(self.solutions),
             "hypervolume_indicator": round(self.hypervolume_indicator, 4),
@@ -121,6 +125,13 @@ class ParetoMultiObjectiveRouter:
         adj: Dict[int, List[Tuple[int, float, float, Dict[str, Any]]]],
         sampler: EnvironmentalSurfaceSampler,
     ) -> None:
+        """Create a NAMOA* multi-objective router over an existing graph.
+
+        Args:
+            nodes: Mapping of node id to ``(lon, lat, elevation)``.
+            adj: Adjacency list mapping node id to ``(neighbour, length, slope, meta)``.
+            sampler: Surface sampler used to derive heat and elevation signals.
+        """
         self.nodes = nodes
         self.adj = adj
         self.sampler = sampler
@@ -182,6 +193,7 @@ class ParetoMultiObjectiveRouter:
         dest_coord = self.nodes[end_node]
 
         def heuristic_time(u_coord: Tuple[float, float, float]) -> float:
+            """Return an optimistic travel-time estimate to the destination, in seconds."""
             d_m = haversine_distance_2d(u_coord, dest_coord)
             max_spd_ms = (profile.base_speed_kmh * 1.5) * 1000.0 / 3600.0
             return d_m / max_spd_ms
@@ -274,6 +286,7 @@ class ParetoMultiObjectiveRouter:
         range_e = max(1.0, max_e - min_e)
 
         def utopia_dist(s: Tuple[ParetoCostVector, Tuple[int, ...]]) -> float:
+            """Return the normalised Euclidean distance of a solution to the utopia point."""
             nt = (s[0].time_s - min_t) / range_t
             na = (s[0].ascent_m - min_a) / range_a
             nh = (s[0].heat_dose - min_h) / range_h

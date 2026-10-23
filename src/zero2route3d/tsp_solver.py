@@ -46,6 +46,7 @@ def solve_tsp_order(
         route.append(n - 1)
 
     def total_distance(r: List[int]) -> float:
+        """Return the cumulative 3D great-circle length of a waypoint index sequence."""
         return sum(
             haversine_distance_3d(waypoints[r[i]], waypoints[r[i + 1]]) for i in range(len(r) - 1)
         )

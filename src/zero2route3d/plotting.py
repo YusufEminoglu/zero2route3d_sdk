@@ -234,6 +234,7 @@ def plot_lorenz_equity_curve(
         raise ValueError("Expected EquityScorecardResult instance with lorenz_curve.")
 
     def _share(mapping: Any, *keys: str) -> float:
+        """Return the first present numeric value among ``keys``, or 0.0."""
         for key in keys:
             value = mapping.get(key)
             if value is not None:

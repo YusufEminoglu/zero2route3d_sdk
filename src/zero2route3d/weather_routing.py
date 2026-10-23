@@ -32,6 +32,7 @@ class WeatherRouteSummary:
     segments: list[HeadwindResistanceResult]
 
     def to_dict(self) -> dict[str, Any]:
+        """Return the weather route summary as a JSON-serialisable dictionary."""
         return {
             "total_distance_km": round(self.total_distance_km, 3),
             "wind_energy_penalty_kwh": round(self.total_wind_energy_penalty_kwh, 3),
@@ -69,7 +70,7 @@ def compute_apparent_wind_resistance(
     headwind_dist = 0.0
 
     # Calm aerodynamic baseline power: P_calm = 0.5 * rho * CdA * v^3
-    p_calm = 0.5 * rho_air * drag_area_cd_a * (v_ms ** 3)
+    p_calm = 0.5 * rho_air * drag_area_cd_a * (v_ms**3)
 
     for i in range(n - 1):
         p1 = waypoints[i]
@@ -102,7 +103,7 @@ def compute_apparent_wind_resistance(
 
         # Aerodynamic resistive force in direction of motion: F_drag = 0.5 * rho * CdA * V_air^2 * cos(yaw)
         # Power P = F_drag * V_vehicle
-        f_drag = 0.5 * rho_air * drag_area_cd_a * (app_speed ** 2) * math.cos(math.radians(yaw_deg))
+        f_drag = 0.5 * rho_air * drag_area_cd_a * (app_speed**2) * math.cos(math.radians(yaw_deg))
         p_aero = max(0.0, f_drag * v_ms)
         penalty_w = p_aero - p_calm
 

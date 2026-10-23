@@ -34,10 +34,12 @@ class GlobalDemFetcher:
 
     @classmethod
     def _cache_key(cls, lon: float, lat: float) -> str:
+        """Return the canonical cache key for a coordinate, rounded to five decimals."""
         return f"{round(lon, 5):.5f},{round(lat, 5):.5f}"
 
     @classmethod
     def _load_disk_cache(cls) -> None:
+        """Populate the in-memory cache from disk once per process."""
         if cls._DISK_CACHE_LOADED:
             return
         cls._DISK_CACHE_LOADED = True
@@ -56,6 +58,7 @@ class GlobalDemFetcher:
 
     @classmethod
     def _save_disk_cache(cls) -> None:
+        """Persist the in-memory cache to disk atomically, trimming to the size limit."""
         with contextlib.suppress(Exception):
             if len(cls._MEMORY_CACHE) > cls._MAX_CACHE_ENTRIES:
                 keep = list(cls._MEMORY_CACHE.items())[-cls._MAX_CACHE_ENTRIES :]

@@ -21,7 +21,9 @@ class TestZero2Route3DRounds2And3(unittest.TestCase):
     def test_micromobility_comfort_and_vibrations(self) -> None:
         segs = [200.0, 500.0, 300.0]
         surfaces = ["asphalt_smooth", "cobblestone", "paved_tiles"]
-        score = evaluate_micro_mobility_comfort(segs, surfaces, speeds_kmh=20.0, wheel_diameter_inches=8.5)
+        score = evaluate_micro_mobility_comfort(
+            segs, surfaces, speeds_kmh=20.0, wheel_diameter_inches=8.5
+        )
 
         self.assertIsInstance(score, MicroMobilityRouteScore)
         self.assertEqual(score.total_distance_km, 1.0)

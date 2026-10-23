@@ -46,6 +46,7 @@ class CopernicusEOSuite:
 
     @classmethod
     def get_output_dir(cls) -> Path:
+        """Return (and create if needed) the EO raster cache directory."""
         out_dir = Path(tempfile.gettempdir()) / "zero2route3d_eo_cache"
         out_dir.mkdir(parents=True, exist_ok=True)
         return out_dir

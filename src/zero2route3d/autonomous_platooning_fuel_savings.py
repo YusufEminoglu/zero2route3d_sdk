@@ -27,6 +27,7 @@ class PlatoonFuelResult:
     economic_cost_savings_usd: float
 
     def to_dict(self) -> dict[str, Any]:
+        """Return the platooning fuel result as a JSON-serialisable dictionary."""
         return {
             "lead_saved_pct": round(self.lead_truck_fuel_saved_pct, 1),
             "trailing_saved_pct": round(self.trailing_trucks_avg_fuel_saved_pct, 1),
@@ -62,7 +63,9 @@ def simulate_truck_platooning_benefits(
     total_savings_pct = (lead_savings_pct + (n - 1) * trailing_savings_pct) / float(n)
 
     # Fuel calculations
-    baseline_liters_per_truck = (cfg.trip_distance_km / 100.0) * cfg.baseline_fuel_consumption_l_100km
+    baseline_liters_per_truck = (
+        cfg.trip_distance_km / 100.0
+    ) * cfg.baseline_fuel_consumption_l_100km
     total_baseline_liters = baseline_liters_per_truck * n
 
     liters_saved = total_baseline_liters * (total_savings_pct / 100.0)

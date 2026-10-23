@@ -26,6 +26,7 @@ class DescentSafetyResult:
     recommended_safe_descent_speed_kmh: float
 
     def to_dict(self) -> dict[str, Any]:
+        """Return the brake fade analysis as a JSON-serialisable dictionary."""
         return {
             "is_safe": self.is_descent_safe,
             "peak_brake_temp_c": round(self.peak_brake_temperature_c, 1),
@@ -71,7 +72,7 @@ def evaluate_steep_descent_brake_fade(
         risk = "CRITICAL_RUNAWAY"
         rec_speed = min(25.0, descent_speed_kmh * 0.4)
 
-    is_safe = (peak_temp <= veh.max_safe_brake_temp_c)
+    is_safe = peak_temp <= veh.max_safe_brake_temp_c
 
     return DescentSafetyResult(
         is_descent_safe=is_safe,

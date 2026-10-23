@@ -34,6 +34,7 @@ class RailAdhesionResult:
     braking_distance_margin_m: float
 
     def to_dict(self) -> dict[str, Any]:
+        """Return the rail adhesion assessment as a JSON-serialisable dictionary."""
         return {
             "adhesion_mu": round(self.curtius_kniffler_adhesion_coeff, 3),
             "max_tractive_kn": round(self.maximum_tractive_effort_kn, 1),
@@ -92,5 +93,5 @@ def evaluate_rail_tractive_adhesion(
         maximum_negotiable_gradient_pct=max(0.0, max_grad),
         is_wheel_slip_risk=is_slip,
         tractive_power_utilization_pct=min(100.0, max(0.0, power_util)),
-        braking_distance_margin_m=max(0.0, 1000.0 - (v ** 2) / (2 * mu * g * 0.5)),
+        braking_distance_margin_m=max(0.0, 1000.0 - (v**2) / (2 * mu * g * 0.5)),
     )

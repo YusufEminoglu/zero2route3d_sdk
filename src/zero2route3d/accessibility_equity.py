@@ -30,6 +30,7 @@ class ZoneAccessibilityRecord:
     percentile_rank: float = 0.0
 
     def to_dict(self) -> Dict[str, Any]:
+        """Return the zone accessibility record as a JSON-serialisable dictionary."""
         return {
             "zone_id": self.zone_id,
             "name": self.name,
@@ -67,6 +68,7 @@ class EquityScorecardResult:
     tier_distribution: Dict[str, int] = field(default_factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
+        """Return the equity scorecard as a JSON-serialisable dictionary."""
         return {
             "gini_coefficient": round(self.gini_coefficient, 4),
             "palma_ratio": round(self.palma_ratio, 2),
@@ -83,6 +85,12 @@ class AccessibilityEquityEngine:
     """Spatial accessibility computation and distributional justice scorecard."""
 
     def __init__(self, catchment_radius_m: float = 1500.0) -> None:
+        """Create an accessibility equity engine.
+
+        Args:
+            catchment_radius_m: Maximum travel distance, in metres, at which a
+                facility is considered reachable.
+        """
         self.catchment_radius_m = catchment_radius_m
 
     def gaussian_decay(self, distance_m: float) -> float:

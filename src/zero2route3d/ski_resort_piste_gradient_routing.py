@@ -27,6 +27,7 @@ class SkiPisteRouteResult:
     has_uphill_traverses: bool
 
     def to_dict(self) -> dict[str, Any]:
+        """Return the ski piste route result as a JSON-serialisable dictionary."""
         return {
             "descent_dist_m": round(self.total_descent_distance_m, 1),
             "vertical_drop_m": round(self.vertical_drop_m, 1),

@@ -52,6 +52,7 @@ class NetworkSourceManager:
     CACHE_DIR = Path(tempfile.gettempdir()) / "zero2route3d_cache"
 
     def __init__(self) -> None:
+        """Create the on-disk network cache directory if it does not yet exist."""
         self.CACHE_DIR.mkdir(parents=True, exist_ok=True)
 
     @staticmethod

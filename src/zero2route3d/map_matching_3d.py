@@ -47,6 +47,7 @@ class MatchedTrackPoint3D:
     speed_kmh: float
 
     def to_dict(self) -> Dict[str, Any]:
+        """Return the matched track point as a JSON-serialisable dictionary."""
         return {
             "lon": round(self.lon, 6),
             "lat": round(self.lat, 6),
@@ -106,6 +107,15 @@ class HMMMapMatcher3D:
         sigma_z: float = 4.07,
         beta: float = 3.0,
     ) -> None:
+        """Create an HMM map matcher over a 3D topological graph.
+
+        Args:
+            nodes: Mapping of node id to ``(lon, lat, elevation)``.
+            adj: Adjacency list mapping node id to ``(neighbour, length, slope, meta)``.
+            micro_elevation: Optional micro-elevation engine for refined heights.
+            sigma_z: GPS elevation noise standard deviation in metres.
+            beta: Exponential transition-decay parameter.
+        """
         self.nodes = nodes
         self.adj = adj
         self.micro_elevation = micro_elevation or MicroElevationEngine()

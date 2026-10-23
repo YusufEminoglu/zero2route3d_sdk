@@ -27,6 +27,7 @@ class PowertrainThermalResult:
     temperature_profile_c: list[float]
 
     def to_dict(self) -> dict[str, Any]:
+        """Return the powertrain thermal result as a JSON-serialisable dictionary."""
         return {
             "overheating_risk": self.is_thermal_overheating_risk,
             "peak_temp_c": round(self.peak_coolant_temp_c, 1),
@@ -36,7 +37,9 @@ class PowertrainThermalResult:
 
 
 def simulate_powertrain_thermal_load(
-    route_segments_distance_elevation: Sequence[tuple[float, float]],  # (seg_dist_m, seg_elevation_gain_m)
+    route_segments_distance_elevation: Sequence[
+        tuple[float, float]
+    ],  # (seg_dist_m, seg_elevation_gain_m)
     vehicle_gross_weight_tonnes: float = 40.0,
     vehicle_speed_kmh: float = 45.0,
     engine_profile: EngineHeatProfile | None = None,
@@ -73,7 +76,9 @@ def simulate_powertrain_thermal_load(
 
         # Radiator cooling capacity: Q_rad = U * A * (T_coolant - T_ambient) * (v_air factor)
         delta_t = max(0.0, current_t_c - eng.ambient_air_temp_c)
-        cooling_power_kw = eng.radiator_heat_rejection_kw * (delta_t / 60.0) * math.sqrt(v_ms / 10.0)
+        cooling_power_kw = (
+            eng.radiator_heat_rejection_kw * (delta_t / 60.0) * math.sqrt(v_ms / 10.0)
+        )
 
         # Fan kick-in at 95C
         if current_t_c > 95.0:
@@ -91,7 +96,7 @@ def simulate_powertrain_thermal_load(
             stress_idx += (current_t_c - 100.0) * (dt_s / 60.0)
 
     peak_t = max(temps) if temps else current_t_c
-    overheating = (peak_t > eng.max_safe_coolant_temp_c)
+    overheating = peak_t > eng.max_safe_coolant_temp_c
 
     return PowertrainThermalResult(
         is_thermal_overheating_risk=overheating,

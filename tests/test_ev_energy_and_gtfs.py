@@ -21,9 +21,9 @@ class TestEVEnergyAndGTFS(unittest.TestCase):
         # Route with uphill climb then steep downhill descent
         waypoints_3d = [
             (0.0, 0.0, 100.0),
-            (5000.0, 0.0, 600.0),    # 5 km climb +500m
-            (10000.0, 0.0, 100.0),   # 5 km descent -500m (regen braking)
-            (15000.0, 0.0, 100.0),   # 5 km flat
+            (5000.0, 0.0, 600.0),  # 5 km climb +500m
+            (10000.0, 0.0, 100.0),  # 5 km descent -500m (regen braking)
+            (15000.0, 0.0, 100.0),  # 5 km flat
         ]
 
         prof = EVBatteryProfile(

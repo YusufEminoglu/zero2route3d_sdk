@@ -39,6 +39,7 @@ class AirCorridorResult:
     flight_waypoints_3d: list[tuple[float, float, float]]
 
     def to_dict(self) -> dict[str, Any]:
+        """Return the air corridor result as a JSON-serialisable dictionary."""
         return {
             "feasible": self.is_flight_feasible,
             "flight_distance_m": round(self.total_flight_distance_m, 1),
@@ -52,7 +53,9 @@ class AirCorridorResult:
 def solve_3d_drone_flight_corridor(
     takeoff_point: tuple[float, float, float],
     landing_point: tuple[float, float, float],
-    building_obstacles: Sequence[dict[str, Any]],  # {'bbox': (min_x, min_y, max_x, max_y), 'height': h}
+    building_obstacles: Sequence[
+        dict[str, Any]
+    ],  # {'bbox': (min_x, min_y, max_x, max_y), 'height': h}
     no_fly_zones: Sequence[GeofencedNoFlyZone] = (),
     drone_profile: DroneAirspaceProfile | None = None,
 ) -> AirCorridorResult:
@@ -81,7 +84,9 @@ def solve_3d_drone_flight_corridor(
                 max_bldg_h = max(max_bldg_h, bh)
                 min_clearance = min(min_clearance, drone.cruise_altitude_agl_m - bh)
 
-    safe_cruise_z = max(p0[2] + drone.cruise_altitude_agl_m, max_bldg_h + drone.min_building_clearance_m)
+    safe_cruise_z = max(
+        p0[2] + drone.cruise_altitude_agl_m, max_bldg_h + drone.min_building_clearance_m
+    )
     safe_cruise_z = min(drone.max_altitude_agl_m + p0[2], safe_cruise_z)
 
     # 4-stage 3D flight plan: Takeoff -> Ascend -> Cruise -> Descend
@@ -103,7 +108,9 @@ def solve_3d_drone_flight_corridor(
         total_flight_distance_m=tot_dist,
         estimated_flight_time_minutes=flight_time_min,
         battery_consumed_pct=battery_used,
-        min_obstacle_clearance_m=max(0.0, min_clearance) if min_clearance != float("inf") else drone.cruise_altitude_agl_m,
+        min_obstacle_clearance_m=max(0.0, min_clearance)
+        if min_clearance != float("inf")
+        else drone.cruise_altitude_agl_m,
         no_fly_zone_violations_count=0,
         flight_waypoints_3d=waypoints,
     )

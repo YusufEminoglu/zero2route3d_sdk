@@ -34,8 +34,12 @@ class TestZero2Route3DRound8(unittest.TestCase):
         self.assertIn("safe_headings", d)
 
     def test_pavement_hydroplaning_risk(self) -> None:
-        pave = PavementCrossSlopeProfile(drainage_path_length_m=8.0, cross_slope_pct=2.0, macrotexture_depth_mm=1.2)
-        res = evaluate_road_hydroplaning_risk(vehicle_speed_kmh=110.0, rainfall_intensity_mm_hr=60.0, pavement=pave)
+        pave = PavementCrossSlopeProfile(
+            drainage_path_length_m=8.0, cross_slope_pct=2.0, macrotexture_depth_mm=1.2
+        )
+        res = evaluate_road_hydroplaning_risk(
+            vehicle_speed_kmh=110.0, rainfall_intensity_mm_hr=60.0, pavement=pave
+        )
 
         self.assertIsInstance(res, HydroplaningRiskResult)
         self.assertGreater(res.water_film_depth_mm, 0.0)

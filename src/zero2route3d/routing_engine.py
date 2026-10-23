@@ -181,6 +181,12 @@ class RoutingEngine3D:
         sampler: Optional[EnvironmentalSurfaceSampler] = None,
         weights: Optional[MCDAWeights] = None,
     ) -> None:
+        """Create a 3D routing engine with an empty graph.
+
+        Args:
+            sampler: Environmental surface sampler used to drape elevations.
+            weights: MCDA weight configuration for edge costs.
+        """
         self.sampler = sampler or EnvironmentalSurfaceSampler()
         self.weights = weights or MCDAWeights()
         self.nodes: Dict[int, Tuple[float, float, float]] = {}
@@ -203,6 +209,7 @@ class RoutingEngine3D:
         node_counter = 0
 
         def get_or_create_node(pt: Tuple[float, float, float]) -> int:
+            """Return the node id for a coordinate, registering it when it is new."""
             nonlocal node_counter
             try:
                 lon_value = float(pt[0])
@@ -410,6 +417,7 @@ class RoutingEngine3D:
         avoid_set = avoid_edges or set()
 
         def heuristic(u_coord: Tuple[float, float, float]) -> float:
+            """Return the admissible great-circle distance estimate to the destination."""
             h = haversine_distance_2d(u_coord, dest_coord)
             return h if math.isfinite(h) else 0.0
 

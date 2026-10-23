@@ -30,6 +30,7 @@ class ShadeExposureReport:
     comfort_category: str  # 'Cool & Shaded', 'Balanced', 'Intense Sun'
 
     def to_dict(self) -> Dict[str, Any]:
+        """Return the shade exposure report as a JSON-serialisable dictionary."""
         return {
             "solar_hour": self.solar_position.solar_hour,
             "azimuth_deg": round(self.solar_position.azimuth_deg, 1),

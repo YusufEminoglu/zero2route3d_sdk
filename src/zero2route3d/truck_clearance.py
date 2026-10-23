@@ -42,6 +42,7 @@ class TruckRouteFeasibilityResult:
     violation_details: list[dict[str, Any]]
 
     def to_dict(self) -> dict[str, Any]:
+        """Return the truck route feasibility result as a JSON-serialisable dictionary."""
         return {
             "feasible": self.is_route_feasible,
             "total_distance_km": round(self.total_distance_km, 3),
@@ -80,7 +81,7 @@ def solve_heavy_vehicle_route3d(
         dy = p2[1] - p1[1]
         dz = p2[2] - p1[2]
         d_horiz = math.hypot(dx, dy)
-        d_3d = math.sqrt(d_horiz ** 2 + dz ** 2)
+        d_3d = math.sqrt(d_horiz**2 + dz**2)
         tot_dist_m += d_3d
 
         slope_pct = (abs(dz) / max(1.0, d_horiz)) * 100.0
@@ -88,12 +89,14 @@ def solve_heavy_vehicle_route3d(
 
         if slope_pct > truck.max_gradient_percent:
             s_viols += 1
-            violations.append({
-                "type": "EXCESSIVE_SLOPE",
-                "segment_index": i,
-                "slope_pct": round(slope_pct, 1),
-                "limit_pct": truck.max_gradient_percent,
-            })
+            violations.append(
+                {
+                    "type": "EXCESSIVE_SLOPE",
+                    "segment_index": i,
+                    "slope_pct": round(slope_pct, 1),
+                    "limit_pct": truck.max_gradient_percent,
+                }
+            )
 
     # 2. Obstacle Proximity & Physical Clearance Checks
     for obs in obstacles:
@@ -105,31 +108,37 @@ def solve_heavy_vehicle_route3d(
             if dist_to_obs < 30.0:
                 if truck.vehicle_height_m > obs.max_underpass_height_m:
                     h_viols += 1
-                    violations.append({
-                        "type": "HEIGHT_RESTRICTION",
-                        "obstacle_id": obs.obstacle_id,
-                        "truck_height_m": truck.vehicle_height_m,
-                        "clearance_limit_m": obs.max_underpass_height_m,
-                    })
+                    violations.append(
+                        {
+                            "type": "HEIGHT_RESTRICTION",
+                            "obstacle_id": obs.obstacle_id,
+                            "truck_height_m": truck.vehicle_height_m,
+                            "clearance_limit_m": obs.max_underpass_height_m,
+                        }
+                    )
 
                 if truck.gross_vehicle_weight_tons > obs.max_weight_limit_tons:
                     w_viols += 1
-                    violations.append({
-                        "type": "WEIGHT_RESTRICTION",
-                        "obstacle_id": obs.obstacle_id,
-                        "truck_tons": truck.gross_vehicle_weight_tons,
-                        "bridge_limit_tons": obs.max_weight_limit_tons,
-                    })
+                    violations.append(
+                        {
+                            "type": "WEIGHT_RESTRICTION",
+                            "obstacle_id": obs.obstacle_id,
+                            "truck_tons": truck.gross_vehicle_weight_tons,
+                            "bridge_limit_tons": obs.max_weight_limit_tons,
+                        }
+                    )
 
                 if truck.is_hazardous_materials and obs.is_hazmat_prohibited:
                     haz_viols += 1
-                    violations.append({
-                        "type": "HAZMAT_PROHIBITION",
-                        "obstacle_id": obs.obstacle_id,
-                    })
+                    violations.append(
+                        {
+                            "type": "HAZMAT_PROHIBITION",
+                            "obstacle_id": obs.obstacle_id,
+                        }
+                    )
                 break
 
-    is_feasible = (h_viols == 0 and w_viols == 0 and s_viols == 0 and haz_viols == 0)
+    is_feasible = h_viols == 0 and w_viols == 0 and s_viols == 0 and haz_viols == 0
 
     return TruckRouteFeasibilityResult(
         is_route_feasible=is_feasible,

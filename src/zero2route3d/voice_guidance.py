@@ -28,6 +28,7 @@ class TurnByTurn3DRouteGuide:
     instructions: list[ManeuverInstruction3D]
 
     def to_dict(self) -> dict[str, Any]:
+        """Return the turn-by-turn guide as a JSON-serialisable dictionary."""
         return {
             "total_steps": self.total_steps,
             "total_distance_km": round(self.total_distance_km, 3),

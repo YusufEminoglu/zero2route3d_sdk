@@ -49,6 +49,7 @@ def _parse_intervals(value: str) -> List[float]:
 
 
 def _build_parser() -> argparse.ArgumentParser:
+    """Build the top-level argument parser and its subcommands."""
     parser = argparse.ArgumentParser(
         prog="zero2route3d",
         description="02Route 3D - Headless 3D Spatial Mobility & Kinematic Routing Engine",
@@ -118,6 +119,7 @@ def _build_parser() -> argparse.ArgumentParser:
 
 
 def _make_sampler(dem_path: Optional[str]) -> Optional[object]:
+    """Build an elevation sampler for ``dem_path``, or None when no DEM was given."""
     if not dem_path:
         return None
     from .environmental_raster import EnvironmentalSurfaceSampler
@@ -126,6 +128,7 @@ def _make_sampler(dem_path: Optional[str]) -> Optional[object]:
 
 
 def _cmd_profiles(args: argparse.Namespace) -> int:
+    """Print the mobility profile catalog for the requested category."""
     if args.category == "all":
         keys = list_profile_keys()
         heading = "all categories"
@@ -153,6 +156,7 @@ def _cmd_profiles(args: argparse.Namespace) -> int:
 
 
 def _cmd_route(args: argparse.Namespace) -> int:
+    """Compute a 3D route and write the requested export formats."""
     print(f"Calculating 3D route from {args.origin} to {args.dest} [Profile: {args.profile}]...")
     result = solve_3d_route(
         args.origin,
@@ -198,6 +202,7 @@ def _cmd_route(args: argparse.Namespace) -> int:
 
 
 def _cmd_isochrone(args: argparse.Namespace) -> int:
+    """Compute 3D isochrone bands and optionally write them as GeoJSON."""
     print(f"Computing 3D isochrones from {args.center} with intervals {args.intervals} min...")
     iso_res = solve_3d_isochrones(
         args.center,
@@ -227,6 +232,14 @@ def _cmd_isochrone(args: argparse.Namespace) -> int:
 
 
 def main(argv: Optional[List[str]] = None) -> int:
+    """Run the command-line interface and return an exit status code.
+
+    Args:
+        argv: Optional argument list; when None, ``sys.argv`` is used.
+
+    Returns:
+        Process exit status: 0 on success, 1 on a handled error, 2 on usage errors.
+    """
     parser = _build_parser()
     args = parser.parse_args(argv)
 

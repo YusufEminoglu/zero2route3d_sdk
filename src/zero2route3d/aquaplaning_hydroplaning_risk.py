@@ -27,6 +27,7 @@ class HydroplaningRiskResult:
     safety_margin_kmh: float
 
     def to_dict(self) -> dict[str, Any]:
+        """Return the hydroplaning risk assessment as a JSON-serialisable dictionary."""
         return {
             "rain_intensity_mm_hr": round(self.rainfall_intensity_mm_hr, 1),
             "water_film_mm": round(self.water_film_depth_mm, 2),
@@ -64,7 +65,7 @@ def evaluate_road_hydroplaning_risk(
         * (max(1e-4, txd_in) ** 0.11)
         * (max(1.0, l_ft) ** 0.43)
         * (max(0.1, i_in_hr) ** 0.59)
-        * (s_frac ** -0.42)
+        * (s_frac**-0.42)
     )
     wft_in = max(0.0, raw_depth_in - txd_in)
     wft_mm = wft_in * 25.4

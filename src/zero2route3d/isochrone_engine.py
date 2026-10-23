@@ -24,6 +24,7 @@ def convex_hull_2d(points: Sequence[Tuple[float, float]]) -> List[Tuple[float, f
         return unique
 
     def cross(o: Tuple[float, float], a: Tuple[float, float], b: Tuple[float, float]) -> float:
+        """Return the 2D cross product of vectors ``oa`` and ``ob``."""
         return (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0])
 
     lower: List[Tuple[float, float]] = []
@@ -71,6 +72,7 @@ class IsochroneBand:
         return self.approx_area_ha / 100.0
 
     def to_dict(self) -> Dict[str, Any]:
+        """Return the isochrone band summary as a JSON-serialisable dictionary."""
         return {
             "time_cutoff_min": self.time_cutoff_min,
             "reachable_node_count": self.reachable_node_count,
@@ -102,6 +104,7 @@ class IsochroneResult:
     total_reachable_nodes: int
 
     def to_dict(self) -> Dict[str, Any]:
+        """Return the isochrone result summary as a JSON-serialisable dictionary."""
         return {
             "origin": {"lon": self.origin.lon, "lat": self.origin.lat, "name": self.origin.name},
             "profile_name": self.profile.name,
@@ -132,6 +135,11 @@ class IsochroneEngine3D:
     """Generates 3D multi-interval travel-time catchment zones from a topological graph."""
 
     def __init__(self, routing_engine: RoutingEngine3D) -> None:
+        """Bind the isochrone engine to an existing 3D routing engine.
+
+        Args:
+            routing_engine: Graph and profile-aware engine used for wavefront expansion.
+        """
         self.engine = routing_engine
 
     def compute_isochrones(

@@ -27,6 +27,7 @@ class TunnelSmokeSafetyResult:
     required_jet_fans_count: int
 
     def to_dict(self) -> dict[str, Any]:
+        """Return the tunnel smoke safety result as a JSON-serialisable dictionary."""
         return {
             "v_crit_mps": round(self.critical_velocity_to_prevent_backlayering_mps, 2),
             "v_actual_mps": round(self.actual_longitudinal_air_velocity_mps, 2),
@@ -75,7 +76,7 @@ def simulate_tunnel_smoke_dispersion(
     friction_f = 0.022
     k_loss = 1.5 + friction_f * (tunnel_length_m / h)
     v_target = max(2.5, v_crit * 1.05)
-    total_thrust_needed_n = 0.5 * rho * (v_target ** 2) * k_loss * a
+    total_thrust_needed_n = 0.5 * rho * (v_target**2) * k_loss * a
     fans_count = max(4, math.ceil(total_thrust_needed_n / max(1.0, available_thrust_per_fan_n)))
 
     v_actual = v_target

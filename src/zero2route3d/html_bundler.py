@@ -37,6 +37,13 @@ class StandaloneHtmlBundler:
     """Bundles a 3D route, its statistics and an interactive viewer into one HTML file."""
 
     def __init__(self, web_dir: Optional[Union[str, Path]] = None) -> None:
+        """Create a bundler.
+
+        Args:
+            web_dir: Optional directory containing the Three.js studio assets. When
+                supplied and complete, the WebGL viewer is inlined instead of the
+                built-in lightweight viewer.
+        """
         self.web_dir: Optional[Path] = Path(web_dir) if web_dir else None
 
     # -- public API --------------------------------------------------------
@@ -78,6 +85,7 @@ class StandaloneHtmlBundler:
 
     @staticmethod
     def _finite_number(value: Any, default: float = 0.0) -> float:
+        """Coerce a value to a finite float, falling back to ``default``."""
         try:
             number = float(value)
         except (TypeError, ValueError):
@@ -175,6 +183,7 @@ class StandaloneHtmlBundler:
             raise RuntimeError("web_dir must be set to bundle the WebGL studio.")
 
         def read(folder: str, name: str) -> str:
+            """Read a studio asset file as UTF-8 text."""
             return (web_dir / folder / name).read_text(encoding="utf-8")
 
         css_content = read("css", "studio3d.css")

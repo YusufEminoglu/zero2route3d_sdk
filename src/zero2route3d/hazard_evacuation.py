@@ -40,6 +40,7 @@ class EvacuationRouteResult:
     routes: list[EvacuationPath3D]
 
     def to_dict(self) -> dict[str, Any]:
+        """Return the evacuation routing result as a JSON-serialisable dictionary."""
         return {
             "total_evacuees": self.total_population_evacuated,
             "mean_time_min": round(self.mean_evacuation_time_min, 1),
@@ -50,8 +51,10 @@ class EvacuationRouteResult:
 
 
 def solve_3d_evacuation_routes(
-    evacuee_origins: list[dict[str, Any]],  # List of dicts with 'id', 'population', 'coords': (x, y, z)
-    muster_points: list[dict[str, Any]],    # List of dicts with 'id', 'coords': (x, y, z), 'capacity'
+    evacuee_origins: list[
+        dict[str, Any]
+    ],  # List of dicts with 'id', 'population', 'coords': (x, y, z)
+    muster_points: list[dict[str, Any]],  # List of dicts with 'id', 'coords': (x, y, z), 'capacity'
     hazard_zones: list[DynamicHazardZone],
     walking_speed_kmh: float = 4.5,
 ) -> EvacuationRouteResult:
@@ -119,7 +122,7 @@ def solve_3d_evacuation_routes(
             seg_d = math.sqrt((p2[0] - p1[0]) ** 2 + (p2[1] - p1[1]) ** 2 + (p2[2] - p1[2]) ** 2)
             d_tot += seg_d
             if p2[2] > p1[2]:
-                elev_gain += (p2[2] - p1[2])
+                elev_gain += p2[2] - p1[2]
 
         # Tobler speed adjustment for uphill climb
         climb_factor = max(0.5, 1.0 - (elev_gain / max(1.0, d_tot)) * 2.0)

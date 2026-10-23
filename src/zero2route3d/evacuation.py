@@ -36,6 +36,7 @@ class EvacuationPlan:
     risk_score: float
 
     def to_dict(self) -> Dict[str, Any]:
+        """Return the evacuation plan as a JSON-serialisable dictionary."""
         return {
             "muster_point": {
                 "name": self.muster_point.name,
@@ -53,6 +54,11 @@ class EvacuationRouter:
     """Computes least-risk evacuation routes avoiding dynamic hazards to designated muster points."""
 
     def __init__(self, routing_engine: RoutingEngine3D) -> None:
+        """Bind the router to an existing 3D routing engine.
+
+        Args:
+            routing_engine: Engine used to compute candidate routes to muster points.
+        """
         self.engine = routing_engine
         self.hazards: List[HazardZone] = []
 

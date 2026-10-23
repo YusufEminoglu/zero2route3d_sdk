@@ -26,6 +26,7 @@ class LandingZoneResult:
     critical_obstacles_count: int
 
     def to_dict(self) -> dict[str, Any]:
+        """Return the landing zone evaluation as a JSON-serialisable dictionary."""
         return {
             "safe_landing": self.is_safe_for_landing,
             "tlof_pos": [round(c, 2) for c in self.touchdown_point_3d],

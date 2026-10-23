@@ -18,8 +18,12 @@ from zero2route3d import (
 
 class TestZero2Route3DRound9(unittest.TestCase):
     def test_rail_gradient_adhesion_limits(self) -> None:
-        loco = LocomotiveTractionProfile(locomotive_weight_tonnes=120.0, maximum_power_kw=6400.0, operating_speed_kmh=60.0)
-        res = evaluate_rail_tractive_adhesion(gradient_pct=1.8, locomotive=loco, rail_condition=RailSurfaceCondition.DRY_CLEAN)
+        loco = LocomotiveTractionProfile(
+            locomotive_weight_tonnes=120.0, maximum_power_kw=6400.0, operating_speed_kmh=60.0
+        )
+        res = evaluate_rail_tractive_adhesion(
+            gradient_pct=1.8, locomotive=loco, rail_condition=RailSurfaceCondition.DRY_CLEAN
+        )
 
         self.assertIsInstance(res, RailAdhesionResult)
         self.assertGreater(res.curtius_kniffler_adhesion_coeff, 0.15)
@@ -31,7 +35,9 @@ class TestZero2Route3DRound9(unittest.TestCase):
         self.assertIn("max_tractive_kn", d)
 
     def test_autonomous_truck_platooning(self) -> None:
-        cfg = PlatoonAerodynamicConfig(platoon_size_trucks=3, inter_vehicle_gap_meters=10.0, trip_distance_km=500.0)
+        cfg = PlatoonAerodynamicConfig(
+            platoon_size_trucks=3, inter_vehicle_gap_meters=10.0, trip_distance_km=500.0
+        )
         res = simulate_truck_platooning_benefits(cfg)
 
         self.assertIsInstance(res, PlatoonFuelResult)

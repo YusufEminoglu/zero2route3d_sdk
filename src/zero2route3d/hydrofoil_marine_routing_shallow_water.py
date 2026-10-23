@@ -28,6 +28,7 @@ class HydrofoilRouteResult:
     fuel_consumption_liters: float
 
     def to_dict(self) -> dict[str, Any]:
+        """Return the hydrofoil voyage result as a JSON-serialisable dictionary."""
         return {
             "voyage_nm": round(self.total_voyage_nautical_miles, 2),
             "time_hours": round(self.estimated_travel_time_hours, 2),
@@ -39,7 +40,9 @@ class HydrofoilRouteResult:
 
 
 def simulate_hydrofoil_marine_route(
-    route_waypoints_lat_lon_depth: Sequence[tuple[float, float, float]],  # (lat, lon, bathymetric_depth_m)
+    route_waypoints_lat_lon_depth: Sequence[
+        tuple[float, float, float]
+    ],  # (lat, lon, bathymetric_depth_m)
     vessel: HydrofoilVesselProfile | None = None,
 ) -> HydrofoilRouteResult:
     """Simulate coastal hydrofoil marine passage, hydrodynamic lift transition, and shallow water squat clearance."""

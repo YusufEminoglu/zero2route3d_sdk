@@ -176,6 +176,7 @@ def get_theme_palette(theme_key: str = "atlas") -> dict:
 
 
 def _shade(color: str, factor: float) -> str:
+    """Return ``color`` darkened (factor < 1) or lightened (factor > 1) by ``factor``."""
     if not (color.startswith("#") and len(color) == 7):
         return color
     rgb = [int(color[index : index + 2], 16) for index in (1, 3, 5)]
@@ -188,6 +189,7 @@ def _shade(color: str, factor: float) -> str:
 
 
 def _fill(color: str, opacity: float = 0.82) -> Any:
+    """Build a QGIS fill symbol in ``color`` with a darker outline and ``opacity``."""
     from qgis.core import QgsFillSymbol
 
     symbol = QgsFillSymbol.createSimple(
@@ -203,6 +205,7 @@ def _fill(color: str, opacity: float = 0.82) -> Any:
 
 
 def _line(color: str, width: float, dashed: bool = False) -> Any:
+    """Build a QGIS line symbol with round caps, optionally dashed."""
     from qgis.core import QgsLineSymbol
 
     properties = {
@@ -217,6 +220,7 @@ def _line(color: str, width: float, dashed: bool = False) -> Any:
 
 
 def _renderer(expression: str, entries: Any) -> Any:
+    """Build a QGIS categorized renderer from ``(value, label, symbol)`` entries."""
     from qgis.core import QgsCategorizedSymbolRenderer, QgsRendererCategory
 
     return QgsCategorizedSymbolRenderer(
@@ -226,6 +230,7 @@ def _renderer(expression: str, entries: Any) -> Any:
 
 
 def _building_renderer(theme: dict) -> Any:
+    """Return a categorized renderer styling buildings by OSM building type."""
     colors = theme["buildings"]
     expression = (
         "CASE"
@@ -255,6 +260,7 @@ def _building_renderer(theme: dict) -> Any:
 
 
 def _road_renderer(theme: dict) -> Any:
+    """Return a categorized renderer styling roads by OSM highway hierarchy."""
     major = theme["roads_major"]
     minor = theme["roads_minor"]
     greens = theme["greens"]
@@ -295,6 +301,7 @@ def _road_renderer(theme: dict) -> Any:
 
 
 def _point_renderer(theme: dict) -> Any:
+    """Return a single-symbol renderer for point features such as trees."""
     from qgis.core import QgsMarkerSymbol, QgsSingleSymbolRenderer
 
     tree_color = theme.get("trees", "#16a34a")

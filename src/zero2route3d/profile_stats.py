@@ -33,6 +33,7 @@ class CueInstruction:
     warning: str = ""
 
     def to_dict(self) -> Dict[str, Any]:
+        """Return the cue instruction as a JSON-serialisable dictionary."""
         return {
             "step_number": self.step_number,
             "instruction": self.instruction,
@@ -69,13 +70,16 @@ class RouteStatistics:
 
     @property
     def total_distance_km(self) -> float:
+        """Total route distance in kilometres, rounded to two decimals."""
         return round(self.total_distance_m / 1000.0, 2)
 
     @property
     def total_duration_min(self) -> float:
+        """Total route duration in minutes, rounded to one decimal."""
         return round(self.total_duration_s / 60.0, 1)
 
     def to_dict(self) -> Dict[str, Any]:
+        """Return the route statistics as a JSON-serialisable dictionary."""
         return {
             "total_distance_m": round(self.total_distance_m, 1),
             "total_distance_km": self.total_distance_km,

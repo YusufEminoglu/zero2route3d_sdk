@@ -17,6 +17,18 @@ class CopernicusDemTileSource:
 
     @classmethod
     def tile_id(cls, lon: float, lat: float) -> str:
+        """Return the Copernicus GLO-30 tile identifier covering a WGS84 coordinate.
+
+        Args:
+            lon: Longitude in decimal degrees.
+            lat: Latitude in decimal degrees.
+
+        Returns:
+            Tile identifier such as ``N38_00_E027_00``.
+
+        Raises:
+            CopernicusDemError: If the coordinate is non-numeric, non-finite or out of bounds.
+        """
         try:
             lon_value = float(lon)
             lat_value = float(lat)
@@ -35,6 +47,18 @@ class CopernicusDemTileSource:
 
     @classmethod
     def tile_url(cls, lon: float, lat: float) -> str:
+        """Return the public COG download URL for the tile covering a WGS84 coordinate.
+
+        Args:
+            lon: Longitude in decimal degrees.
+            lat: Latitude in decimal degrees.
+
+        Returns:
+            Fully qualified HTTPS URL of the GeoTIFF tile.
+
+        Raises:
+            CopernicusDemError: If the coordinate is invalid.
+        """
         tile = cls.tile_id(lon, lat)
         prefix = f"Copernicus_DSM_COG_10_{tile}_DEM"
         return f"{cls.BASE_URL}/{prefix}/{prefix}.tif"
@@ -45,6 +69,19 @@ class CopernicusDemTileSource:
         bbox: Sequence[float],
         max_tiles: int = 16,
     ) -> List[Tuple[int, int, str]]:
+        """Enumerate the tiles intersecting a WGS84 bounding box.
+
+        Args:
+            bbox: Sequence of ``(min_lon, min_lat, max_lon, max_lat)`` in decimal degrees.
+                Reversed min/max pairs are normalised; values are clamped to WGS84 bounds.
+            max_tiles: Maximum number of tiles allowed before raising an error.
+
+        Returns:
+            List of ``(lon_index, lat_index, url)`` tuples.
+
+        Raises:
+            CopernicusDemError: If the extent is malformed, non-finite or spans too many tiles.
+        """
         if not bbox or len(bbox) < 4:
             raise CopernicusDemError("A four-coordinate extent is required for Copernicus DEM.")
         min_lon, min_lat, max_lon, max_lat = (float(value) for value in bbox[:4])

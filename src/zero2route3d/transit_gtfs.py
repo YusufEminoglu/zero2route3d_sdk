@@ -51,6 +51,7 @@ class TransitLeg:
     trip_id: str = ""
 
     def to_dict(self) -> dict[str, Any]:
+        """Return the transit leg as a JSON-serialisable dictionary."""
         return {
             "mode": self.mode,
             "from_stop": self.from_stop_name,
@@ -78,6 +79,7 @@ class TransitJourneyResult:
     legs: list[TransitLeg]
 
     def to_dict(self) -> dict[str, Any]:
+        """Return the transit journey as a JSON-serialisable dictionary."""
         return {
             "departure_time": self.departure_time,
             "arrival_time": self.arrival_time,
@@ -122,20 +124,42 @@ class GTFSFeedReader:
     """Lightweight in-memory GTFS Schedule parser."""
 
     def __init__(self) -> None:
+        """Create an empty in-memory GTFS feed."""
         self.stops: dict[str, GTFSStop] = {}
         self.routes: dict[str, GTFSRoute] = {}
-        self.stop_times: dict[str, list[GTFSTripStopTime]] = {}  # trip_id -> stop_times sorted by sequence
+        self.stop_times: dict[
+            str, list[GTFSTripStopTime]
+        ] = {}  # trip_id -> stop_times sorted by sequence
 
-    def add_stop(self, stop_id: str, name: str, lat: float, lon: float, elevation: float = 0.0) -> None:
-        self.stops[stop_id] = GTFSStop(stop_id=stop_id, stop_name=name, lat=lat, lon=lon, elevation=elevation)
+    def add_stop(
+        self, stop_id: str, name: str, lat: float, lon: float, elevation: float = 0.0
+    ) -> None:
+        """Register a stop with its name, WGS84 position and elevation."""
+        self.stops[stop_id] = GTFSStop(
+            stop_id=stop_id, stop_name=name, lat=lat, lon=lon, elevation=elevation
+        )
 
-    def add_route(self, route_id: str, short_name: str, long_name: str, route_type: int = 3) -> None:
-        self.routes[route_id] = GTFSRoute(route_id=route_id, short_name=short_name, long_name=long_name, route_type=route_type)
+    def add_route(
+        self, route_id: str, short_name: str, long_name: str, route_type: int = 3
+    ) -> None:
+        """Register a route; ``route_type`` follows the GTFS numeric taxonomy."""
+        self.routes[route_id] = GTFSRoute(
+            route_id=route_id, short_name=short_name, long_name=long_name, route_type=route_type
+        )
 
-    def add_trip_stop(self, trip_id: str, stop_id: str, arrival_time: str, departure_time: str, seq: int) -> None:
+    def add_trip_stop(
+        self, trip_id: str, stop_id: str, arrival_time: str, departure_time: str, seq: int
+    ) -> None:
+        """Append a scheduled stop time to a trip, keeping the trip sorted by sequence."""
         arr_s = _time_str_to_seconds(arrival_time)
         dep_s = _time_str_to_seconds(departure_time)
-        st = GTFSTripStopTime(trip_id=trip_id, stop_id=stop_id, arrival_time_s=arr_s, departure_time_s=dep_s, stop_sequence=seq)
+        st = GTFSTripStopTime(
+            trip_id=trip_id,
+            stop_id=stop_id,
+            arrival_time_s=arr_s,
+            departure_time_s=dep_s,
+            stop_sequence=seq,
+        )
         if trip_id not in self.stop_times:
             self.stop_times[trip_id] = []
         self.stop_times[trip_id].append(st)
@@ -146,6 +170,12 @@ class TimetableTransitRouter:
     """Connection Scan / Timetable search routing engine."""
 
     def __init__(self, feed: GTFSFeedReader, walking_speed_kmh: float = 4.5) -> None:
+        """Create a timetable router over a loaded GTFS feed.
+
+        Args:
+            feed: Parsed GTFS stops, routes and trip stop-times.
+            walking_speed_kmh: Walking speed used for access and egress legs.
+        """
         self.feed = feed
         self.walk_speed_ms = (walking_speed_kmh * 1000.0) / 3600.0
 
@@ -253,7 +283,9 @@ class TimetableTransitRouter:
                                 route_name="Access Walk",
                             )
                             transit_duration = (a_st.arrival_time_s - b_st.departure_time_s) / 60.0
-                            transit_dist = _haversine_meters((b_stop.lat, b_stop.lon), (a_stop.lat, a_stop.lon))
+                            transit_dist = _haversine_meters(
+                                (b_stop.lat, b_stop.lon), (a_stop.lat, a_stop.lon)
+                            )
                             leg2_transit = TransitLeg(
                                 mode="TRANSIT",
                                 from_stop_id=b_stop.stop_id,

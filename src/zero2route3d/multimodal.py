@@ -23,6 +23,7 @@ class MultiModalLeg:
     transfer_penalty_min: float = 3.0
 
     def to_dict(self) -> Dict[str, Any]:
+        """Return the multi-modal leg summary as a JSON-serialisable dictionary."""
         return {
             "leg_index": self.leg_index,
             "mode_name": self.mode_name,
@@ -49,6 +50,7 @@ class MultiModalJourney:
     transfer_count: int
 
     def to_dict(self) -> Dict[str, Any]:
+        """Return the multi-modal journey summary as a JSON-serialisable dictionary."""
         return {
             "total_distance_km": round(self.total_distance_km, 2),
             "total_duration_min": round(self.total_duration_min, 1),
@@ -63,6 +65,11 @@ class MultiModalRouter:
     """Chains multiple transport modes across intermediate hubs and transit stops."""
 
     def __init__(self, routing_engine: RoutingEngine3D) -> None:
+        """Bind the router to an existing 3D routing engine.
+
+        Args:
+            routing_engine: Engine used to route each access, main and egress leg.
+        """
         self.engine = routing_engine
 
     def calculate_multimodal_trip(

@@ -60,6 +60,7 @@ class EVRouteEnergyResult:
     segments: list[EVSegmentEnergy]
 
     def to_dict(self) -> dict[str, Any]:
+        """Return the EV route energy result as a JSON-serialisable dictionary."""
         return {
             "vehicle_name": self.profile.vehicle_name,
             "total_distance_km": round(self.total_distance_km, 3),
@@ -71,7 +72,9 @@ class EVRouteEnergyResult:
             "net_energy_kwh": round(self.net_energy_kwh, 3),
             "efficiency_wh_per_km": round(self.efficiency_wh_per_km, 1),
             "is_depleted": self.is_depleted,
-            "depletion_distance_km": round(self.depletion_distance_km, 3) if self.depletion_distance_km else None,
+            "depletion_distance_km": round(self.depletion_distance_km, 3)
+            if self.depletion_distance_km
+            else None,
         }
 
 
@@ -79,6 +82,11 @@ class EVEnergySimulator:
     """Physics-based 3D powertrain model simulating EV power balance across topographies."""
 
     def __init__(self, profile: EVBatteryProfile | None = None) -> None:
+        """Create an EV energy simulator.
+
+        Args:
+            profile: Battery and vehicle parameters; a default sedan is used when None.
+        """
         self.profile = profile or EVBatteryProfile()
 
     def simulate_route(
@@ -132,7 +140,7 @@ class EVEnergySimulator:
             dy = p2[1] - p1[1]
             dz = p2[2] - p1[2]
             d_horiz = math.hypot(dx, dy)
-            d_3d = math.sqrt(d_horiz ** 2 + dz ** 2)
+            d_3d = math.sqrt(d_horiz**2 + dz**2)
 
             if d_3d <= 1e-4:
                 continue
@@ -150,8 +158,10 @@ class EVEnergySimulator:
 
             # 1. Resistive Forces (N)
             f_roll = p.rolling_resistance_crr * p.vehicle_mass_kg * g * math.cos(theta)
-            f_aero = 0.5 * rho_air * p.drag_coefficient_cd * p.frontal_area_m2 * (v_ms ** 2)
-            f_gravity = p.vehicle_mass_kg * g * math.sin(theta)  # positive uphill, negative downhill
+            f_aero = 0.5 * rho_air * p.drag_coefficient_cd * p.frontal_area_m2 * (v_ms**2)
+            f_gravity = (
+                p.vehicle_mass_kg * g * math.sin(theta)
+            )  # positive uphill, negative downhill
 
             total_traction_force_n = f_roll + f_aero + f_gravity
             mechanical_power_w = total_traction_force_n * v_ms
@@ -162,13 +172,19 @@ class EVEnergySimulator:
 
             if mechanical_power_w >= 0:
                 # Traction mode
-                battery_energy_kwh = (mechanical_energy_kwh / p.drivetrain_efficiency) + aux_energy_kwh
+                battery_energy_kwh = (
+                    mechanical_energy_kwh / p.drivetrain_efficiency
+                ) + aux_energy_kwh
                 total_consumed += battery_energy_kwh
                 is_regen = False
             else:
                 # Downhill regenerative braking mode
                 regen_power_kw = min(p.max_regen_power_kw, abs(mechanical_power_w / 1000.0))
-                recovered_kwh = (regen_power_kw * duration_s / 3600.0) * p.regenerative_efficiency * p.drivetrain_efficiency
+                recovered_kwh = (
+                    (regen_power_kw * duration_s / 3600.0)
+                    * p.regenerative_efficiency
+                    * p.drivetrain_efficiency
+                )
                 battery_energy_kwh = -recovered_kwh + aux_energy_kwh
                 if battery_energy_kwh < 0:
                     total_regen += abs(battery_energy_kwh)
@@ -231,10 +247,31 @@ def solve_ev_energy_route(
 ) -> EVRouteEnergyResult:
     """Convenience helper to compute EV 3D energy consumption."""
     profiles = {
-        "sedan": EVBatteryProfile(vehicle_name="Electric Sedan", battery_capacity_kwh=75.0, vehicle_mass_kg=1950.0, drag_coefficient_cd=0.23),
-        "suv": EVBatteryProfile(vehicle_name="Electric SUV", battery_capacity_kwh=90.0, vehicle_mass_kg=2400.0, drag_coefficient_cd=0.29),
-        "van": EVBatteryProfile(vehicle_name="Electric Cargo Van", battery_capacity_kwh=68.0, vehicle_mass_kg=2800.0, drag_coefficient_cd=0.34),
-        "bus": EVBatteryProfile(vehicle_name="Electric Transit Bus", battery_capacity_kwh=350.0, vehicle_mass_kg=13500.0, drag_coefficient_cd=0.65, frontal_area_m2=7.5),
+        "sedan": EVBatteryProfile(
+            vehicle_name="Electric Sedan",
+            battery_capacity_kwh=75.0,
+            vehicle_mass_kg=1950.0,
+            drag_coefficient_cd=0.23,
+        ),
+        "suv": EVBatteryProfile(
+            vehicle_name="Electric SUV",
+            battery_capacity_kwh=90.0,
+            vehicle_mass_kg=2400.0,
+            drag_coefficient_cd=0.29,
+        ),
+        "van": EVBatteryProfile(
+            vehicle_name="Electric Cargo Van",
+            battery_capacity_kwh=68.0,
+            vehicle_mass_kg=2800.0,
+            drag_coefficient_cd=0.34,
+        ),
+        "bus": EVBatteryProfile(
+            vehicle_name="Electric Transit Bus",
+            battery_capacity_kwh=350.0,
+            vehicle_mass_kg=13500.0,
+            drag_coefficient_cd=0.65,
+            frontal_area_m2=7.5,
+        ),
     }
     prof = profiles.get(vehicle_type.lower(), profiles["sedan"])
     prof.initial_soc_percent = initial_soc_percent

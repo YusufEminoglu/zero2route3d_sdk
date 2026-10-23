@@ -29,6 +29,7 @@ class EmissionAssessmentResult:
     is_eco_optimal: bool
 
     def to_dict(self) -> dict[str, Any]:
+        """Return the emission assessment as a JSON-serialisable dictionary."""
         return {
             "total_co2_kg": round(self.total_co2_kg, 2),
             "fuel_liters": round(self.total_fuel_consumed_liters, 2),
@@ -83,13 +84,15 @@ def calculate_route_co2_emissions(
 
         tot_work_joules += work_seg
         if dz > 0:
-            gradient_work_joules += (f_grade * seg_dist)
+            gradient_work_joules += f_grade * seg_dist
 
     # Internal combustion engine / powertrain efficiency (~30% thermal efficiency for diesel)
     engine_efficiency = 0.30
     fuel_energy_density_j_per_l = 36.0e6  # 36 MJ / liter diesel
 
-    fuel_needed_liters = (tot_work_joules / max(0.1, engine_efficiency)) / fuel_energy_density_j_per_l
+    fuel_needed_liters = (
+        tot_work_joules / max(0.1, engine_efficiency)
+    ) / fuel_energy_density_j_per_l
     co2_total_kg = (fuel_needed_liters * veh.co2_grams_per_liter) / 1000.0
 
     grad_fuel = (gradient_work_joules / max(0.1, engine_efficiency)) / fuel_energy_density_j_per_l

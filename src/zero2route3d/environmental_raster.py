@@ -44,7 +44,22 @@ class MCDAWeights:
         weight_extra: float = 0.5,
         **kwargs: Any,
     ) -> None:
+        """Create an MCDA weight set, accepting short aliases through ``kwargs``.
+
+        Args:
+            weight_distance: Weight for the distance criterion.
+            weight_slope: Weight for the slope criterion.
+            weight_heat: Weight for the heat criterion.
+            weight_green: Weight for the greenery criterion.
+            weight_safety: Weight for the safety criterion.
+            weight_solar: Weight for the solar exposure criterion.
+            weight_extra: Weight reserved for additional criteria.
+            **kwargs: Optional short aliases (``distance``, ``slope``, ...) that
+                override the corresponding named argument.
+        """
+
         def _clean_w(val: Any, default: float) -> float:
+            """Coerce a weight to a finite non-negative float, or return the default."""
             try:
                 f = float(val)
                 return max(0.0, f) if math.isfinite(f) else default
@@ -117,6 +132,23 @@ class EnvironmentalSurfaceSampler:
         green: Optional[RasterInput] = None,
         lst_range_c: Tuple[float, float] = (20.0, 50.0),
     ) -> None:
+        """Create a surface sampler from GeoTIFF paths or QGIS raster layers.
+
+        Args:
+            dem_layer: Primary DEM raster (path or QGIS layer) for elevation.
+            dem_layers: Additional DEM rasters, tried in order when a point is
+                outside the primary raster.
+            lst_layer: Land surface temperature raster.
+            green_layer: Vegetation / greenness raster.
+            additional_layers: Extra rasters exposed through generic sampling.
+            sun_azimuth_deg: Solar azimuth in degrees used for aspect shading.
+            sun_elevation_deg: Solar elevation in degrees used for aspect shading.
+            weights: MCDA weight configuration; defaults are used when None.
+            dem: Alias for ``dem_layer`` (takes precedence when provided).
+            lst: Alias for ``lst_layer`` (takes precedence when provided).
+            green: Alias for ``green_layer`` (takes precedence when provided).
+            lst_range_c: Expected ``(min, max)`` land surface temperature in °C.
+        """
         dem_layer = dem if dem is not None else dem_layer
         lst_layer = lst if lst is not None else lst_layer
         green_layer = green if green is not None else green_layer

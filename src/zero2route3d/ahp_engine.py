@@ -37,6 +37,7 @@ class AHPResult:
     status_message: str
 
     def to_dict(self) -> Dict[str, Any]:
+        """Return the AHP result as a JSON-serialisable dictionary."""
         return {
             "criteria": self.criteria,
             "weights": {k: round(v, 4) for k, v in self.weights.items()},
@@ -52,6 +53,11 @@ class AHPEngine:
     """Solves AHP pairwise comparison matrices for multi-criteria routing weights."""
 
     def __init__(self, criteria: Sequence[str]) -> None:
+        """Create an AHP engine with an identity pairwise comparison matrix.
+
+        Args:
+            criteria: Ordered criterion names used as rows and columns of the matrix.
+        """
         self.criteria = list(criteria)
         self.n = len(self.criteria)
         self.matrix: List[List[float]] = [[1.0] * self.n for _ in range(self.n)]

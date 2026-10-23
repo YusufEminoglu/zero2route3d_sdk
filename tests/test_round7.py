@@ -20,7 +20,9 @@ class TestZero2Route3DRound7(unittest.TestCase):
         segs = [(500.0, 40.0)] * 5
         eng = EngineHeatProfile(displacement_liters=13.0, radiator_heat_rejection_kw=150.0)
 
-        res = simulate_powertrain_thermal_load(segs, vehicle_gross_weight_tonnes=38.0, engine_profile=eng)
+        res = simulate_powertrain_thermal_load(
+            segs, vehicle_gross_weight_tonnes=38.0, engine_profile=eng
+        )
 
         self.assertIsInstance(res, PowertrainThermalResult)
         self.assertGreater(res.peak_coolant_temp_c, 85.0)
@@ -33,13 +35,19 @@ class TestZero2Route3DRound7(unittest.TestCase):
     def test_time_dependent_isochrones(self) -> None:
         origin = (0.0, 0.0)
         # Rush hour vs midnight
-        res_am = solve_time_dependent_isochrones(origin, departure_hour=8, cutoff_minutes_intervals=(15.0, 30.0))
-        res_night = solve_time_dependent_isochrones(origin, departure_hour=2, cutoff_minutes_intervals=(15.0, 30.0))
+        res_am = solve_time_dependent_isochrones(
+            origin, departure_hour=8, cutoff_minutes_intervals=(15.0, 30.0)
+        )
+        res_night = solve_time_dependent_isochrones(
+            origin, departure_hour=2, cutoff_minutes_intervals=(15.0, 30.0)
+        )
 
         self.assertIsInstance(res_am, DynamicIsochroneResult)
         self.assertIsInstance(res_night, DynamicIsochroneResult)
         self.assertEqual(len(res_am.rings), 2)
-        self.assertLess(res_am.congested_effective_speed_kmh, res_night.congested_effective_speed_kmh)
+        self.assertLess(
+            res_am.congested_effective_speed_kmh, res_night.congested_effective_speed_kmh
+        )
         self.assertLess(res_am.rings[-1].effective_radius_m, res_night.rings[-1].effective_radius_m)
 
         d = res_am.to_dict()

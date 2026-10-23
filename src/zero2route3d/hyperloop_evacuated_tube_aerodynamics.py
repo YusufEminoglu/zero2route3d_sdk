@@ -28,6 +28,7 @@ class HyperloopAeroResult:
     blockage_ratio: float
 
     def to_dict(self) -> dict[str, Any]:
+        """Return the hyperloop aerodynamic result as a JSON-serialisable dictionary."""
         return {
             "kantrowitz_mach": round(self.kantrowitz_limit_mach_number, 3),
             "actual_mach": round(self.actual_flight_mach_number, 3),
@@ -76,9 +77,17 @@ def simulate_hyperloop_pod_aerodynamics(
     rho_tube = cfg.tube_internal_pressure_pa / (r_gas * ambient_temperature_k)
 
     # Aerodynamic drag F_drag = 0.5 * rho * v^2 * Cd * A * compressibility_correction
-    prandtl_glauert = 1.0 / max(0.2, math.sqrt(max(0.05, 1.0 - min(0.95, actual_mach ** 2))))
+    prandtl_glauert = 1.0 / max(0.2, math.sqrt(max(0.05, 1.0 - min(0.95, actual_mach**2))))
     choke_penalty = 3.5 if is_choked else 1.0
-    drag_n = 0.5 * rho_tube * (v_pod_mps ** 2) * cfg.pod_drag_coefficient_cd * a_pod * prandtl_glauert * choke_penalty
+    drag_n = (
+        0.5
+        * rho_tube
+        * (v_pod_mps**2)
+        * cfg.pod_drag_coefficient_cd
+        * a_pod
+        * prandtl_glauert
+        * choke_penalty
+    )
 
     power_kw = (drag_n * v_pod_mps) / 1000.0
 

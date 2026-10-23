@@ -29,6 +29,7 @@ class MicroMobilityRouteScore:
     segments: list[VibrationalComfortResult]
 
     def to_dict(self) -> dict[str, Any]:
+        """Return the micromobility route score as a JSON-serialisable dictionary."""
         return {
             "total_distance_km": round(self.total_distance_km, 3),
             "mean_vibration_rms": round(self.mean_vibration_rms, 3),
@@ -40,7 +41,9 @@ class MicroMobilityRouteScore:
 
 def evaluate_micro_mobility_comfort(
     segment_lengths_m: Sequence[float],
-    surface_types: Sequence[str],  # 'asphalt_smooth', 'asphalt_rough', 'cobblestone', 'gravel', 'paved_tiles'
+    surface_types: Sequence[
+        str
+    ],  # 'asphalt_smooth', 'asphalt_rough', 'cobblestone', 'gravel', 'paved_tiles'
     speeds_kmh: Sequence[float] | float = 18.0,
     wheel_diameter_inches: float = 8.5,  # 8.5" for e-scooter, 28" for road bike
 ) -> MicroMobilityRouteScore:
@@ -76,7 +79,7 @@ def evaluate_micro_mobility_comfort(
 
         # Duration
         dur_s = d_m / max(0.5, v_ms)
-        vdv = a_rms * (dur_s ** 0.25)
+        vdv = a_rms * (dur_s**0.25)
 
         # ISO 2631-1 Comfort scale
         if a_rms < 0.315:
