@@ -6,6 +6,7 @@ them passes just because a call returned without raising.
 
 from __future__ import annotations
 
+import importlib.util
 import json
 import tempfile
 import unittest
@@ -233,6 +234,12 @@ class TestMultiModalHubSelection(unittest.TestCase):
         self.assertIsNot(journey.legs[1].start_point, journey.legs[1].end_point)
 
 
+def _installed(*modules: str) -> bool:
+    """Return True when every optional dependency in ``modules`` is importable."""
+    return all(importlib.util.find_spec(name) is not None for name in modules)
+
+
+@unittest.skipUnless(_installed("matplotlib"), "matplotlib (geo extra) not installed")
 class TestEnergyModelMatchesTheProfile(unittest.TestCase):
     def test_motorised_route_is_not_charged_walking_calories(self) -> None:
         import matplotlib

@@ -10,75 +10,15 @@
 [![PyPI version](https://img.shields.io/pypi/v/zero2route3d-sdk.svg?color=10b981)](https://pypi.org/project/zero2route3d-sdk/)
 [![Python version support](https://img.shields.io/pypi/pyversions/zero2route3d-sdk.svg?color=3b82f6)](https://pypi.org/project/zero2route3d-sdk/)
 [![Documentation](https://img.shields.io/badge/docs-GEOPHILO-10b981.svg)](https://geophilo.com/zero2route3d_sdk/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/YusufEminoglu/zero2route3d_sdk/blob/main/LICENSE)
 [![Code style: Ruff](https://img.shields.io/badge/code%20style-ruff-D7FF64.svg)](https://docs.astral.sh/ruff/)
-[![Test Coverage](https://img.shields.io/badge/coverage-68%25-yellowgreen.svg)](#-development--testing)
+[![Test Coverage](https://img.shields.io/badge/coverage-81%25-yellowgreen.svg)](#-development--testing)
 
-**Headless 3D Spatial Mobility, Biomechanical Human Kinematics, Metabolic Energy Modeling, and Multi-Criteria Routing Analytics.**
+**3D terrain-aware routing in Python: slope- and energy-aware shortest paths, isochrones, elevation profiles and GPX map-matching.**
 
-[📖 **Open Interactive Web Manual**](https://geophilo.com/zero2route3d_sdk/) • [📦 **PyPI Package**](https://pypi.org/project/zero2route3d-sdk/) • [🐛 **Issue Tracker**](https://gitlab.com/geospacephilo/zero2route3d_sdk/-/issues)
+[📖 **Open Interactive Web Manual**](https://geophilo.com/zero2route3d_sdk/) • [📦 **PyPI Package**](https://pypi.org/project/zero2route3d-sdk/) • [💻 **GitHub**](https://github.com/YusufEminoglu/zero2route3d_sdk) • [🐛 **Issue Tracker**](https://github.com/YusufEminoglu/zero2route3d_sdk/issues)
 
 </div>
-
----
-
-## 🌟 Overview
-
-**zero2route3d-sdk** is a scientific Python library for **3D spatial mobility modeling, physiological human movement kinematics, and multi-criteria routing**. 
-
-Unlike conventional 2D planar routing engines (e.g. standard OSRM or pgRouting) that ignore terrain gradient and human physiology, **zero2route3d-sdk** seamlessly fuses **topographic 3D graph models**, **biomechanical energy expenditure equations (Tobler & Minetti)**, **4D Pareto multi-objective search (NAMOA*)**, and **environmental microclimate impedance** into a pure-Python, headless library powered by NumPy and SciPy.
-
----
-
-## ✨ Features at a Glance
-
-* **3D topological routing** — A* / Dijkstra over CSR graphs with turn penalties, grade resistance, elevation draping and barrier constraints.
-* **Biomechanical kinematics** — Tobler hiking speed, Minetti metabolic cost, cycling/scooter dynamics, UTCI thermal comfort and solar shading.
-* **15 mobility profiles** — pedestrian, accessibility, micromobility and vehicle presets, plus custom JSON profiles.
-* **4D Pareto optimization** — NAMOA* frontier over travel time, climb, heat dose and metabolic energy.
-* **3D isochrones** — anisotropic wavefront propagation with convex-hull catchment geometry.
-* **HMM map matching** — Viterbi snapping of noisy 3D GPS/GPX traces to road centerlines.
-* **Domain simulators** — EV energy, GTFS transit, emergency evacuation, truck clearance, drone corridors, rail adhesion, tunnel smoke, hyperloop aerodynamics, hydrofoil routing and more.
-* **Headless exports** — GeoJSON 3D, GPX 1.1, AutoCAD DXF 3D, QGIS QML styles and standalone Three.js WebGL HTML.
-* **Ecosystem bridges** — GeoPandas GeoDataFrames, NetworkX DiGraphs, Shapely LineStrings and rasterio GeoTIFF sampling.
-* **Pure-Python core** — NumPy/SciPy only at runtime, with lazy optional geospatial imports.
-
----
-
-## 🔬 Core Capabilities
-
-### 1. Biomechanical Kinematics & Energy Expenditure
-* **Tobler's Hiking Function (1993):** Empirical velocity-slope curves ($W(s) = 6.0 \cdot e^{-3.5|s+0.05|}$).
-* **Minetti's Locomotion Energy Polynomial (2002):** Exact mechanical metabolic cost ($J / (kg \cdot m)$) across arbitrary positive and negative slopes.
-* **Cycling & Micromobility Dynamics:** Physical aerodynamic drag ($P_{aero}$), rolling resistance ($P_{rolling}$), and gravitational climbing power for commuter bikes, cargo bikes, e-bikes, and e-scooters.
-* **Universal Thermal Comfort Index (UTCI):** Real-time solar ray-tracing, sun azimuth/elevation angles, and building shade exposure impedance.
-
-### 2. 15 Calibrated Mobility Profiles
-* **Pedestrian:** *Standard Adult*, *Senior / Elderly*, *Child / Safe Walk*, *Runner / Fitness Jogger*, *Scenic & Panoramic Walk*, *Safe & Illuminated Night Walk*.
-* **Universal Accessibility:** *Wheelchair / Barrier-Free*, *Stroller / Pram*.
-* **Active Travel & Micromobility:** *City & Commuter Bicycle*, *Mountain / Gravel Bike*, *E-Scooter / Micromobility*.
-* **Vehicle & Fleet:** *Passenger Car*, *Delivery Courier Van*, *Heavy Goods Truck*, *Emergency / First Responder*.
-
-### 3. Multi-Objective 4D Pareto Optimization (NAMOA*)
-* Identifies the exact non-dominated Pareto frontier simultaneously balancing:
-  $$\vec{C}(p) = \Big( \text{Travel Time}, \text{Cumulative Climb}, \text{Thermal Heat Dose}, \text{Metabolic Calories} \Big)$$
-
-### 4. 3D Topological Routing & Isochrone Wavefronts
-* 3D A* and Dijkstra on compressed sparse row (CSR) graphs with turn penalties, grade-resistance, elevation draping, and barrier constraints.
-* 3D anisotropic travel-time isochrone wavefront propagation with concave/convex hull boundary extraction.
-
-### 5. 3D Hidden Markov Model (HMM) Map Matching
-* High-accuracy Viterbi sequence decoding matching noisy 3D GPS/GPX traces to topological road centerlines with Gaussian emission and exponential transition probabilities.
-
-### 6. Micro-Elevation & Bicubic Spline Derivatives
-* Keys' 16-point bicubic convolution spline interpolation delivering smooth analytical surface gradients ($C^1$ continuity) with exact slope and aspect calculation.
-* Built-in automated Copernicus GLO-30 DEM tile fetcher and GeoTIFF raster reader.
-
-### 7. Multi-Format Headless Export & 3D WebGL Visualization
-* Exports to **GeoJSON 3D** (LineStringZ), **AutoCAD DXF 3D Polylines** (AC1009/AC1015), **GPX 1.1**, and standalone **Three.js 60 FPS WebGL 3D Interactive Cockpit HTML bundles**.
-* Direct bidirectional bridges for **GeoPandas GeoDataFrames** and **NetworkX DiGraphs**.
-
----
 
 ## 📦 Installation
 
@@ -108,9 +48,92 @@ guarded, so the core engine works without the `[geo]` extras. Install them when
 you need GeoPandas/NetworkX bridges, GeoTIFF (DEM/LST) sampling or matplotlib
 plots.
 
+## ⚡ Quickstart (runs offline)
+
+```python
+import zero2route3d as zr3d
+
+# Tiny street network with elevations (lon, lat, z): a steep street over a 40 m hill and a
+# longer flat street around it. Z values are used directly, so no DEM or internet is needed.
+def street(*coords):
+    return {"type": "Feature", "properties": {"highway": "residential"},
+            "geometry": {"type": "LineString", "coordinates": [list(c) for c in coords]}}
+
+network = {"type": "FeatureCollection", "features": [
+    street((27.000, 38.000, 0), (27.002, 38.000, 40), (27.004, 38.000, 0)),  # over the hill
+    street((27.000, 38.000, 0), (27.000, 38.002, 0), (27.004, 38.002, 0), (27.004, 38.000, 0)),  # flat detour
+]}
+
+for profile in ("adult", "wheelchair"):
+    s = zr3d.solve_3d_route((27.000, 38.000), (27.004, 38.000), network, profile=profile).statistics
+    print(f"{profile:10s} {s.total_distance_km:.2f} km  {s.total_duration_min:.1f} min  climb +{s.elevation_gain_m:.0f} m")
+# adult      0.36 km  8.1 min  climb +40 m
+# wheelchair 0.80 km  12.5 min  climb +0 m
+```
+
+For real streets pass a GeoJSON file or GeoDataFrame as `network`, and a GeoTIFF DEM via `dem_sampler=zr3d.EnvironmentalSurfaceSampler(dem="dem.tif")` (needs the `[geo]` extra).
+
 ---
 
-## 🚀 Quickstart & Usage Examples
+## 🌟 Overview
+
+**zero2route3d-sdk** is a scientific Python library for **3D spatial mobility modeling, physiological human movement kinematics, and multi-criteria routing**. 
+
+Unlike conventional 2D planar routing engines (e.g. standard OSRM or pgRouting) that ignore terrain gradient and human physiology, **zero2route3d-sdk** seamlessly fuses **topographic 3D graph models**, **biomechanical energy expenditure equations (Tobler & Minetti)**, **4D Pareto multi-objective search (NAMOA*)**, and **environmental microclimate impedance** into a pure-Python, headless library powered by NumPy and SciPy.
+
+---
+
+## ✨ Features at a Glance
+
+* **3D topological routing** — A* / Dijkstra over CSR graphs with turn penalties, grade resistance, elevation draping and barrier constraints.
+* **Biomechanical kinematics** — Tobler hiking speed, Minetti metabolic cost, cycling/scooter dynamics, UTCI thermal comfort and solar shading.
+* **15 mobility profiles** — pedestrian, accessibility, micromobility and vehicle presets, plus custom JSON profiles.
+* **4D Pareto optimization** — NAMOA* frontier over travel time, climb, heat dose and metabolic energy.
+* **3D isochrones** — anisotropic wavefront propagation with convex-hull catchment geometry.
+* **HMM map matching** — Viterbi snapping of noisy 3D GPS/GPX traces to road centerlines.
+* **Domain simulators** — EV energy, GTFS transit, emergency evacuation, truck clearance, drone corridors, rail adhesion, tunnel smoke, hyperloop aerodynamics, hydrofoil routing and more.
+* **Headless exports** — GeoJSON 3D, GPX 1.1, AutoCAD DXF 3D, QGIS QML styles and standalone Three.js WebGL HTML.
+* **Ecosystem bridges** — GeoPandas GeoDataFrames, NetworkX DiGraphs, Shapely LineStrings and rasterio GeoTIFF sampling.
+* **Pure-Python core** — NumPy/SciPy only at runtime, with lazy optional geospatial imports.
+
+---
+
+## 🔬 Core Capabilities
+
+### 1. Biomechanical Kinematics & Energy Expenditure
+* **Tobler's Hiking Function (1993):** Empirical velocity-slope curves (W(s) = 6.0 · e^(−3.5 · |s + 0.05|)).
+* **Minetti's Locomotion Energy Polynomial (2002):** Exact mechanical metabolic cost (J / (kg · m)) across arbitrary positive and negative slopes.
+* **Cycling & Micromobility Dynamics:** Physical aerodynamic drag (P_aero), rolling resistance (P_rolling), and gravitational climbing power for commuter bikes, cargo bikes, e-bikes, and e-scooters.
+* **Universal Thermal Comfort Index (UTCI):** Real-time solar ray-tracing, sun azimuth/elevation angles, and building shade exposure impedance.
+
+### 2. 15 Calibrated Mobility Profiles
+* **Pedestrian:** *Standard Adult*, *Senior / Elderly*, *Child / Safe Walk*, *Runner / Fitness Jogger*, *Scenic & Panoramic Walk*, *Safe & Illuminated Night Walk*.
+* **Universal Accessibility:** *Wheelchair / Barrier-Free*, *Stroller / Pram*.
+* **Active Travel & Micromobility:** *City & Commuter Bicycle*, *Mountain / Gravel Bike*, *E-Scooter / Micromobility*.
+* **Vehicle & Fleet:** *Passenger Car*, *Delivery Courier Van*, *Heavy Goods Truck*, *Emergency / First Responder*.
+
+### 3. Multi-Objective 4D Pareto Optimization (NAMOA*)
+* Identifies the exact non-dominated Pareto frontier simultaneously balancing:
+  **C(p) = (Travel Time, Cumulative Climb, Thermal Heat Dose, Metabolic Calories)**
+
+### 4. 3D Topological Routing & Isochrone Wavefronts
+* 3D A* and Dijkstra on compressed sparse row (CSR) graphs with turn penalties, grade-resistance, elevation draping, and barrier constraints.
+* 3D anisotropic travel-time isochrone wavefront propagation with concave/convex hull boundary extraction.
+
+### 5. 3D Hidden Markov Model (HMM) Map Matching
+* High-accuracy Viterbi sequence decoding matching noisy 3D GPS/GPX traces to topological road centerlines with Gaussian emission and exponential transition probabilities.
+
+### 6. Micro-Elevation & Bicubic Spline Derivatives
+* Keys' 16-point bicubic convolution spline interpolation delivering smooth analytical surface gradients (C¹ continuity) with exact slope and aspect calculation.
+* Built-in automated Copernicus GLO-30 DEM tile fetcher and GeoTIFF raster reader.
+
+### 7. Multi-Format Headless Export & 3D WebGL Visualization
+* Exports to **GeoJSON 3D** (LineStringZ), **AutoCAD DXF 3D Polylines** (AC1009/AC1015), **GPX 1.1**, and standalone **Three.js 60 FPS WebGL 3D Interactive Cockpit HTML bundles**.
+* Direct bidirectional bridges for **GeoPandas GeoDataFrames** and **NetworkX DiGraphs**.
+
+---
+
+## 🚀 Usage Examples
 
 ### 1. High-Level 3D Route Solving & WebGL 3D Cockpit
 Solve an ADA barrier-free 3D route in one line and export an interactive 3D WebGL viewer:
@@ -351,7 +374,7 @@ If you use **zero2route3d-sdk** in scientific research, transportation planning 
   title     = {{zero2route3d-sdk: Headless 3D spatial mobility, biomechanical human kinematics, and multi-criteria routing engine}},
   year      = {2026},
   publisher = {PyPI - Python Package Index},
-  version   = {0.12.1},
+  version   = {0.13.0},
   url       = {https://gitlab.com/geospacephilo/zero2route3d_sdk}
 }
 ```
@@ -360,4 +383,4 @@ If you use **zero2route3d-sdk** in scientific research, transportation planning 
 
 ## 📜 License
 
-Distributed under the **MIT License**. See [`LICENSE`](LICENSE) for details.
+Distributed under the **MIT License**. See [`LICENSE`](https://github.com/YusufEminoglu/zero2route3d_sdk/blob/main/LICENSE) for details.

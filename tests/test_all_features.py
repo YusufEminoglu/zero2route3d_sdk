@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import importlib.util
 import tempfile
 import unittest
 from pathlib import Path
@@ -46,6 +47,11 @@ from zero2route3d.dem_fetcher import GlobalDemFetcher
 from zero2route3d.kinematics import AnimatedAvatar
 from zero2route3d.micro_elevation import BicubicSurfaceInterpolator, IDWSurfaceInterpolator
 from zero2route3d.network_source import RoadSegment
+
+
+def _installed(*modules: str) -> bool:
+    """Return True when every optional dependency in ``modules`` is importable."""
+    return all(importlib.util.find_spec(name) is not None for name in modules)
 
 
 def fixture_network_segments() -> list[RoadSegment]:
@@ -461,6 +467,7 @@ class TestZero2Route3DSDK(unittest.TestCase):
         finally:
             sys.stdout = saved_stdout
 
+    @unittest.skipUnless(_installed("geopandas", "shapely", "networkx"), "geo extra not installed")
     def test_geopandas_and_networkx_integrations(self) -> None:
         from zero2route3d.integrations import (
             from_geodataframe,
@@ -484,6 +491,9 @@ class TestZero2Route3DSDK(unittest.TestCase):
         reimported = from_geodataframe(gdf)
         self.assertEqual(len(reimported), len(segments))
 
+    @unittest.skipUnless(
+        _installed("geopandas", "shapely", "matplotlib"), "geo extra not installed"
+    )
     def test_route_result_interactive_helpers(self) -> None:
         from zero2route3d import solve_3d_route
 
@@ -504,6 +514,7 @@ class TestZero2Route3DSDK(unittest.TestCase):
         gdf_route = route.to_geodataframe()
         self.assertEqual(len(gdf_route), 1)
 
+    @unittest.skipUnless(_installed("matplotlib"), "matplotlib (geo extra) not installed")
     def test_scientific_plots(self) -> None:
         from zero2route3d import (
             AccessibilityEquityEngine,

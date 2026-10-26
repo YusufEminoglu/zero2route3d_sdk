@@ -4,11 +4,11 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "zero2route3d-sdk"
-version = "0.12.1"
+version = "0.13.0"
 authors = [
     { name = "Yusuf Eminoğlu", email = "yusufeminoglu@gmail.com" }
 ]
-description = "Headless 3D mobility, Tunnel Smoke Dispersion & Hyperloop Tube Aerodynamics Suite."
+description = "3D terrain-aware routing in Python: slope- and energy-aware shortest paths, isochrones, elevation profiles and GPX map-matching."
 keywords = [
     "gis",
     "routing",
@@ -22,12 +22,20 @@ keywords = [
     "dem",
     "pareto",
     "map-matching",
+    "3d-routing",
+    "elevation-profile",
+    "gpx",
+    "hiking",
+    "cycling",
+    "ev-routing",
+    "terrain",
 ]
 readme = "README.md"
 license = "MIT"
 license-files = ["LICENSE"]
 requires-python = ">=3.9"
 classifiers = [
+    "Development Status :: 4 - Beta",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
@@ -67,7 +75,8 @@ zero2route3d = "zero2route3d.cli:main"
 [project.urls]
 Homepage = "https://geophilo.com/"
 Repository = "https://gitlab.com/geospacephilo/zero2route3d_sdk"
-Issues = "https://gitlab.com/geospacephilo/zero2route3d_sdk/-/issues"
+GitHub = "https://github.com/YusufEminoglu/zero2route3d_sdk"
+Issues = "https://github.com/YusufEminoglu/zero2route3d_sdk/issues"
 Documentation = "https://geophilo.com/zero2route3d_sdk/"
 Changelog = "https://gitlab.com/geospacephilo/zero2route3d_sdk/-/blob/main/CHANGELOG.md"
 

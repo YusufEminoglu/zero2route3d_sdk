@@ -3,6 +3,8 @@
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
+
+## [0.13.0] - 2026-10-26
 ### Fixed
 - **A-star route optimality**: the great-circle heuristic was not admissible once edge cost could
   fall below edge length (car hierarchy weight 0.6 on motorways, shade factor 0.6), so a car was
@@ -57,6 +59,9 @@ All notable changes to this project will be documented in this file.
   fall through to the `type` attribute rules and then "Other". Verified against QGIS LTR.
 - **Packaging**: the build requirement now matches the PEP 639 `license = "MIT"` string
   (setuptools 77+) and `license-files` is declared. mypy is clean.
+
+### Changed
+- PyPI metadata: a plain-language summary, search keywords that match what users look for, and a working issue tracker link (GitHub issues; the GitLab issues page returned 404).
 
 ## [0.12.1] - 2026-10-23
 ### Added
