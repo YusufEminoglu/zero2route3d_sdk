@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+### Fixed
+- **Per-segment speeds as arrays**: `evaluate_micro_mobility_comfort(speeds_kmh=...)` and
+  `EVEnergySimulator.simulate_route(target_speeds_kmh=...)` only indexed lists and tuples, so a
+  NumPy array raised `TypeError`. Both now use the new `input_validation.value_at` helper, which
+  treats any non-scalar as a sequence and any real scalar (including NumPy scalars) as constant.
+- **Packaging**: the build requirement now matches the PEP 639 `license = "MIT"` string
+  (setuptools 77+) and `license-files` is declared. mypy is clean.
+
 ## [0.12.1] - 2026-10-23
 ### Added
 - **Public utility test coverage** (`tests/test_public_utilities.py`): 23 tests covering input validation, Copernicus tile helpers, the TSP solver, QML/HTML export, and the local HTTP server lifecycle.

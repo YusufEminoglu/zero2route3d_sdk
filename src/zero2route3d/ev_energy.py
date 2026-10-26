@@ -7,6 +7,8 @@ import math
 from dataclasses import dataclass
 from typing import Any, Sequence
 
+from .input_validation import value_at
+
 
 @dataclass
 class EVBatteryProfile:
@@ -145,11 +147,7 @@ class EVEnergySimulator:
             if d_3d <= 1e-4:
                 continue
 
-            speed_kmh = (
-                target_speeds_kmh[i]
-                if isinstance(target_speeds_kmh, (list, tuple))
-                else float(target_speeds_kmh)
-            )
+            speed_kmh = value_at(target_speeds_kmh, i)
             v_ms = max(1.0, (speed_kmh * 1000.0) / 3600.0)
             duration_s = d_3d / v_ms
 

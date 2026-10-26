@@ -10,6 +10,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
+import numpy as np
+
 from zero2route3d.copernicus_dem import CopernicusDemError, CopernicusDemTileSource
 from zero2route3d.input_validation import (
     deduplicate_adjacent_coordinates,
@@ -17,6 +19,7 @@ from zero2route3d.input_validation import (
     normalize_bbox,
     normalize_time_intervals,
     validate_waypoint_coordinates,
+    value_at,
 )
 from zero2route3d.profile_stats import CueInstruction, RouteStatistics
 from zero2route3d.qml_generator import generate_route_qml_style
@@ -95,6 +98,30 @@ class TestDeduplicateCoordinates(unittest.TestCase):
         self.assertEqual(len(cleaned), 2)
         self.assertEqual(cleaned[0][2], 9.0)
         self.assertEqual(cleaned[1][0], 27.001)
+
+
+class TestPerSegmentValues(unittest.TestCase):
+    def test_value_at_accepts_scalars_and_any_sequence(self) -> None:
+        self.assertEqual(value_at(18.0, 3), 18.0)
+        self.assertEqual(value_at(np.int64(20), 0), 20.0)
+        self.assertEqual(value_at([10.0, 20.0], 1), 20.0)
+        self.assertEqual(value_at(np.array([10.0, 20.0]), 1), 20.0)
+
+    def test_speed_arrays_match_speed_lists(self) -> None:
+        from zero2route3d.ev_energy import EVEnergySimulator
+        from zero2route3d.micromobility_kinetics import evaluate_micro_mobility_comfort
+
+        lengths, surfaces = [100.0, 200.0], ["asphalt_smooth", "gravel"]
+        self.assertEqual(
+            evaluate_micro_mobility_comfort(lengths, surfaces, np.array([15.0, 20.0])).to_dict(),
+            evaluate_micro_mobility_comfort(lengths, surfaces, [15.0, 20.0]).to_dict(),
+        )
+        route = [(0.0, 0.0, 0.0), (100.0, 0.0, 1.0), (200.0, 0.0, 2.0)]
+        sim = EVEnergySimulator()
+        self.assertEqual(
+            sim.simulate_route(route, target_speeds_kmh=np.array([50.0, 60.0])).to_dict(),
+            sim.simulate_route(route, target_speeds_kmh=[50.0, 60.0]).to_dict(),
+        )
 
 
 class TestCopernicusDemTiles(unittest.TestCase):

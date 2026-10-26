@@ -7,6 +7,8 @@ import math
 from dataclasses import dataclass
 from typing import Any, Sequence
 
+from .input_validation import value_at
+
 
 @dataclass
 class VibrationalComfortResult:
@@ -69,7 +71,7 @@ def evaluate_micro_mobility_comfort(
     for i in range(n):
         d_m = segment_lengths_m[i]
         st = surface_types[i] if i < len(surface_types) else "asphalt_smooth"
-        v_kmh = speeds_kmh[i] if isinstance(speeds_kmh, (list, tuple)) else float(speeds_kmh)
+        v_kmh = value_at(speeds_kmh, i)
         v_ms = (v_kmh * 1000.0) / 3600.0
 
         iri = iri_lookup.get(st.lower(), 2.5)

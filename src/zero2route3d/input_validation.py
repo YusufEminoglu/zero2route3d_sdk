@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import math
-from typing import Any, Iterable, List, Optional, Sequence, Tuple
+import numbers
+from typing import Any, Iterable, List, Optional, Sequence, Tuple, cast
 
 
 def finite_number(value: Any, default: float = 0.0) -> float:
@@ -13,6 +14,17 @@ def finite_number(value: Any, default: float = 0.0) -> float:
     except (TypeError, ValueError, OverflowError):
         return default
     return number if math.isfinite(number) else default
+
+
+def value_at(values: Sequence[float] | float, index: int) -> float:
+    """Return ``values[index]`` for a per-item sequence, or ``values`` itself for a scalar.
+
+    Any non-scalar (list, tuple, NumPy array, ...) is treated as a sequence; real-number
+    scalars, including NumPy scalars, apply to every index.
+    """
+    if isinstance(values, numbers.Real):
+        return float(cast(float, values))
+    return float(cast(Sequence[float], values)[index])
 
 
 def normalize_bbox(
