@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.13.1] - 2026-10-27
+### Changed
+- Project URLs (Repository, Changelog) and all README and documentation-site links now point to the GitHub repository instead of GitLab.
+- README shows the Zenodo DOI badge; `CITATION.cff` and the BibTeX entry carry the DOI.
+
 ## [0.13.0] - 2026-10-26
 ### Fixed
 - **A-star route optimality**: the great-circle heuristic was not admissible once edge cost could

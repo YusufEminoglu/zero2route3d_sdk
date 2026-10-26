@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-__version__ = "0.13.0"
+__version__ = "0.13.1"
 __author__ = "Yusuf Eminoğlu"
 __email__ = "yusufeminoglu@gmail.com"
 

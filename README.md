@@ -375,7 +375,7 @@ If you use **zero2route3d-sdk** in scientific research, transportation planning 
   title     = {{zero2route3d-sdk: Headless 3D spatial mobility, biomechanical human kinematics, and multi-criteria routing engine}},
   year      = {2026},
   publisher = {Zenodo},
-  version   = {0.13.0},
+  version   = {0.13.1},
   doi       = {10.5281/zenodo.23677255},
   url       = {https://github.com/YusufEminoglu/zero2route3d_sdk}
 }
