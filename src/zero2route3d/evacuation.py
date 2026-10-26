@@ -7,6 +7,8 @@ from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Sequence
 
 from .kinematics import haversine_distance_2d
+from .profile_stats import densify_3d_linestring
+from .route_corridor_3d import point_to_linestring_distance_meters
 from .routing_engine import RouteResult3D, RoutingEngine3D, Waypoint
 
 
@@ -99,10 +101,19 @@ class EvacuationRouter:
             min_hazard_dist = float("inf")
             risk_penalty = 0.0
 
-            for pt in res.coordinates_3d:
-                for h in self.hazards:
+            # Road edges can be hundreds of metres long, so checking only the route
+            # vertices let a path cross straight through a hazard with zero risk.
+            # Clearance is measured to every segment and exposure is sampled along
+            # the densified path.
+            route_2d = [(pt[0], pt[1]) for pt in res.coordinates_3d]
+            samples = densify_3d_linestring(res.coordinates_3d, sample_interval_m=10.0)
+            for h in self.hazards:
+                d_line = point_to_linestring_distance_meters(h.center_lon, h.center_lat, route_2d)
+                min_hazard_dist = min(min_hazard_dist, d_line)
+                if d_line >= h.radius_m:
+                    continue
+                for pt in samples:
                     d = haversine_distance_2d((pt[0], pt[1]), (h.center_lon, h.center_lat))
-                    min_hazard_dist = min(min_hazard_dist, d)
                     if d < h.radius_m:
                         risk_penalty += (h.radius_m - d) * h.severity_multiplier
 

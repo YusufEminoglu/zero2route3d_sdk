@@ -53,6 +53,7 @@ def classify_ski_pistes_and_route(
     tot_dist = 0.0
     vert_drop = 0.0
     slopes: list[float] = []
+    horizontal: list[float] = []
     has_uphill = False
 
     for i in range(len(pts) - 1):
@@ -72,8 +73,16 @@ def classify_ski_pistes_and_route(
 
         slope_pct = (abs(dz) / max(1.0, h_dist)) * 100.0 if h_dist > 0 else 0.0
         slopes.append(slope_pct)
+        horizontal.append(h_dist)
 
-    avg_slope = sum(slopes) / max(1, len(slopes))
+    # Length-weighted: a plain mean let a 2 m kink outweigh a 1 km run, so the
+    # result depended on vertex spacing rather than on the terrain.
+    tot_horizontal = sum(horizontal)
+    avg_slope = (
+        sum(s * h for s, h in zip(slopes, horizontal)) / tot_horizontal
+        if tot_horizontal > 0
+        else 0.0
+    )
     max_slope = max(slopes) if slopes else 0.0
 
     # Classify overall slope difficulty

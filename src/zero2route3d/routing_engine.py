@@ -345,7 +345,14 @@ class RoutingEngine3D:
                         min_dist = d
                         best_node = nid
 
-        if best_node is not None:
+        # The bucket window is only guaranteed to contain every node within `span`
+        # bucket widths. Longitude buckets shrink with cos(lat), so at high latitude
+        # a nearer node east/west can sit outside the window while a farther one
+        # north/south is inside it; fall through to the full scan in that case.
+        edge_lat = min(90.0, abs(lat) + (span + 1) / 300.0)
+        bucket_w_m = (111320.0 / 300.0) * math.cos(math.radians(edge_lat))
+        covered_radius_m = span * min(bucket_w_m, 110574.0 / 300.0)
+        if best_node is not None and min_dist <= covered_radius_m:
             return best_node
 
         for nid, n_coord in self.nodes.items():
@@ -416,9 +423,23 @@ class RoutingEngine3D:
         w_dict = self.weights.normalized_dict()
         avoid_set = avoid_edges or set()
 
+        # Edge cost can fall below the edge length: hierarchy multipliers go down to
+        # 0.6 (car on a motorway) and shade can lower the thermal factor to 0.6. The
+        # plain great-circle distance then overestimates and A* settles on a costlier
+        # path, so scale it by the smallest per-metre multiplier the cost can reach.
+        min_hier = min(
+            (
+                float(w)
+                for w in profile.hierarchy_weights.values()
+                if math.isfinite(float(w)) and float(w) > 0
+            ),
+            default=1.0,
+        )
+        h_scale = min(1.0, min_hier) * 0.6
+
         def heuristic(u_coord: Tuple[float, float, float]) -> float:
             """Return the admissible great-circle distance estimate to the destination."""
-            h = haversine_distance_2d(u_coord, dest_coord)
+            h = haversine_distance_2d(u_coord, dest_coord) * h_scale
             return h if math.isfinite(h) else 0.0
 
         h_start = heuristic(self.nodes[start_node])

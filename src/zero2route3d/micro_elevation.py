@@ -201,8 +201,11 @@ class MicroElevationEngine:
 
                 if extent.contains(pt):
                     grid = []
-                    col_base = (pt.x() - extent.xMinimum()) / res_x
-                    row_base = (extent.yMaximum() - pt.y()) / res_y
+                    # Fractional position relative to pixel *centres*: the samples
+                    # below sit at (index + 0.5) * res, so without the -0.5 shift the
+                    # surface was read half a pixel east and south of the point.
+                    col_base = (pt.x() - extent.xMinimum()) / res_x - 0.5
+                    row_base = (extent.yMaximum() - pt.y()) / res_y - 0.5
 
                     c_int = int(math.floor(col_base))
                     r_int = int(math.floor(row_base))

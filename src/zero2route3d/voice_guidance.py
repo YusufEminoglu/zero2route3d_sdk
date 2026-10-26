@@ -96,6 +96,9 @@ def generate_3d_turn_by_turn_cues(
         turn_deg = math.degrees(turn_angle_rad)
 
         seg_dist = math.hypot(next_p[0] - curr_p[0], next_p[1] - curr_p[1])
+        # The turn happens at curr_p, so it is announced with the approach distance;
+        # seg_dist is the leg *after* the turn.
+        approach = int(math.hypot(curr_p[0] - prev_p[0], curr_p[1] - prev_p[1]))
         dz = next_p[2] - curr_p[2]
         slope_pct = (dz / max(1.0, seg_dist)) * 100.0
         tot_dist += seg_dist
@@ -103,14 +106,14 @@ def generate_3d_turn_by_turn_cues(
         # Turn type
         if turn_deg > 45:
             m_type = "TURN_RIGHT"
-            tr = f"{int(seg_dist)} metre sonra sağa dönün."
-            en = f"In {int(seg_dist)} meters, turn right."
-            de = f"In {int(seg_dist)} Metern rechts abbiegen."
+            tr = f"{approach} metre sonra sağa dönün."
+            en = f"In {approach} meters, turn right."
+            de = f"In {approach} Metern rechts abbiegen."
         elif turn_deg < -45:
             m_type = "TURN_LEFT"
-            tr = f"{int(seg_dist)} metre sonra sola dönün."
-            en = f"In {int(seg_dist)} meters, turn left."
-            de = f"In {int(seg_dist)} Metern links abbiegen."
+            tr = f"{approach} metre sonra sola dönün."
+            en = f"In {approach} meters, turn left."
+            de = f"In {approach} Metern links abbiegen."
         elif slope_pct > 10.0:
             m_type = "STEEP_CLIMB"
             tr = f"Dik yokuş tırmanışı: %{int(slope_pct)} eğim."
@@ -144,7 +147,7 @@ def generate_3d_turn_by_turn_cues(
     # Arrival
     instructions.append(
         ManeuverInstruction3D(
-            step_index=n + 1,
+            step_index=len(instructions) + 1,
             maneuver_type="ARRIVE",
             distance_to_next_m=0.0,
             slope_percent=0.0,

@@ -8,6 +8,20 @@ from pathlib import Path
 from typing import Any, List, Optional, Union
 
 
+def _hex_to_qgis_rgba(color_hex: str, default: str = "14,165,233,255") -> str:
+    """Convert ``#rrggbb`` or ``#rrggbbaa`` to QGIS ``r,g,b,a``; invalid input gives ``default``."""
+    digits = str(color_hex or "").strip().lstrip("#")
+    if len(digits) not in (6, 8):
+        return default
+    try:
+        channels = [int(digits[i : i + 2], 16) for i in range(0, len(digits), 2)]
+    except ValueError:
+        return default
+    if len(channels) == 3:
+        channels.append(255)
+    return ",".join(str(c) for c in channels)
+
+
 def generate_route_qml_style(
     target_or_profile: Optional[Union[Path, str]] = None,
     layer_title: str = "3D Route",
@@ -30,18 +44,20 @@ def generate_route_qml_style(
         "paramedic": "225,29,72,255",
     }
 
-    prof_key = "adult"
+    prof_key: Optional[str] = None
     target_file: Optional[Path] = None
 
     if isinstance(target_or_profile, Path):
         target_file = target_or_profile
     elif isinstance(target_or_profile, str):
-        if target_or_profile.endswith(".qml"):
+        if target_or_profile.lower().endswith(".qml"):
             target_file = Path(target_or_profile)
         else:
             prof_key = target_or_profile.lower()
 
-    core_color = colors.get(prof_key, "14,165,233,255")
+    # A known profile name picks its palette colour; otherwise honour line_color_hex,
+    # which used to be ignored entirely.
+    core_color = colors.get(prof_key or "", "") or _hex_to_qgis_rgba(line_color_hex)
     parts = core_color.split(",")
     if len(parts) == 4:
         glow_color = f"{parts[0]},{parts[1]},{parts[2]},90"

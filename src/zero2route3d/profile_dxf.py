@@ -39,7 +39,7 @@ def export_route_to_dxf_3d(
             finite(pt[2]) if len(pt) > 2 else 0.0,
         )
         for pt in coords_3d
-        if pt and len(pt) >= 2
+        if pt is not None and len(pt) >= 2
     ]
 
     if not clean_coords:

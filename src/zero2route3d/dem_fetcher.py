@@ -119,9 +119,10 @@ class GlobalDemFetcher:
         missing_pairs: List[Tuple[int, float, float]] = []
 
         for idx, pt in enumerate(coords):
-            if not pt or len(pt) < 2:
-                continue
+            # No truthiness test on ``pt``: a NumPy row raises on ``not pt``.
             try:
+                if pt is None or len(pt) < 2:
+                    continue
                 lon, lat = float(pt[0]), float(pt[1])
             except (TypeError, ValueError, OverflowError):
                 continue

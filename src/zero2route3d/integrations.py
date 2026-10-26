@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
 
 from .kinematics import haversine_distance_2d
-from .network_source import RoadSegment
+from .network_source import NetworkSourceManager, RoadSegment
 from .raster_source import GeoTiffRasterSource
 
 
@@ -42,6 +42,11 @@ def from_geodataframe(
 
     if not isinstance(gdf, gpd.GeoDataFrame):
         raise TypeError("Expected geopandas.GeoDataFrame instance.")
+
+    # Segments are WGS84 lon/lat; projected coordinates (UTM metres) were read as
+    # degrees, giving lengths of thousands of kilometres.
+    if gdf.crs is not None and not gdf.crs.equals("EPSG:4326"):
+        gdf = gdf.to_crs("EPSG:4326")
 
     segments: List[RoadSegment] = []
 
@@ -101,6 +106,9 @@ def from_geodataframe(
                     p2=p1 if reversed_oneway else p2,
                     length_m=length_m,
                     highway_type=highway_val,
+                    # Without this every GeoDataFrame edge kept the default rank 4,
+                    # so a motorway weighed like a residential street.
+                    hierarchy_rank=NetworkSourceManager._highway_to_hierarchy(highway_val),
                     surface=surface_val,
                     is_oneway=is_oneway,
                     is_steps=is_steps,
@@ -188,7 +196,8 @@ def to_networkx_digraph(engine_or_segments: Any) -> Any:
                     v,
                     length_m=length_m,
                     slope_pct=slope_pct,
-                    highway_type=meta.get("highway_type", "residential"),
+                    # RoutingEngine3D stores the tag under "highway".
+                    highway_type=meta.get("highway", meta.get("highway_type", "residential")),
                     surface=meta.get("surface", "asphalt"),
                     is_steps=meta.get("is_steps", False),
                 )

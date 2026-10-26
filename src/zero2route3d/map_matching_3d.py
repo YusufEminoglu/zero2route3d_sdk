@@ -350,35 +350,36 @@ class HMMMapMatcher3D:
     def parse_gpx_string(gpx_xml_content: str) -> List[GPXPoint]:
         """Parse raw GPX string into structured sequence of GPXPoints using safe regex."""
         points: List[GPXPoint] = []
-        with contextlib.suppress(Exception):
-            pattern = re.compile(
-                r"<trkpt\s+[^>]*lat=[\"']([^\"']+)[\"']\s+[^>]*lon=[\"']([^\"']+)[\"'][^>]*>(.*?)</trkpt>",
-                re.DOTALL | re.IGNORECASE,
-            )
-            pattern_reverse = re.compile(
-                r"<trkpt\s+[^>]*lon=[\"']([^\"']+)[\"']\s+[^>]*lat=[\"']([^\"']+)[\"'][^>]*>(.*?)</trkpt>",
-                re.DOTALL | re.IGNORECASE,
-            )
-            matches = list(pattern.finditer(gpx_xml_content))
-            if not matches:
-                matches = list(pattern_reverse.finditer(gpx_xml_content))
+        # One element at a time, either self-closing or with a body, and attributes
+        # in any order. The old pattern needed a closing tag, so a self-closing
+        # <trkpt .../> swallowed the next point's body (or yielded nothing at all),
+        # and one unparsable <ele> silently dropped every remaining point.
+        element = re.compile(
+            r"<trkpt(?=[\s/>])([^>]*?)(?:/>|>(.*?)</trkpt\s*>)", re.DOTALL | re.IGNORECASE
+        )
+        for m in element.finditer(str(gpx_xml_content or "")):
+            attrs = m.group(1)
+            inner = m.group(2) or ""
+            m_lat = re.search(r"(?:^|\s)lat\s*=\s*[\"']([^\"']+)[\"']", attrs, re.IGNORECASE)
+            m_lon = re.search(r"(?:^|\s)lon\s*=\s*[\"']([^\"']+)[\"']", attrs, re.IGNORECASE)
+            if not m_lat or not m_lon:
+                continue
+            try:
+                lat = float(m_lat.group(1))
+                lon = float(m_lon.group(1))
+            except ValueError:
+                continue
 
-            for m in matches:
-                lat = float(m.group(1))
-                lon = float(m.group(2))
-                inner = m.group(3)
-
-                ele = 0.0
-                m_ele = re.search(r"<ele>([^<]+)</ele>", inner, re.IGNORECASE)
-                if m_ele:
+            ele = 0.0
+            m_ele = re.search(r"<ele>([^<]+)</ele>", inner, re.IGNORECASE)
+            if m_ele:
+                with contextlib.suppress(ValueError):
                     ele = float(m_ele.group(1))
 
-                time_iso = ""
-                m_time = re.search(r"<time>([^<]+)</time>", inner, re.IGNORECASE)
-                if m_time:
-                    time_iso = m_time.group(1).strip()
+            time_iso = ""
+            m_time = re.search(r"<time>([^<]+)</time>", inner, re.IGNORECASE)
+            if m_time:
+                time_iso = m_time.group(1).strip()
 
-                points.append(
-                    GPXPoint(lon=lon, lat=lat, elevation_raw_m=ele, timestamp_iso=time_iso)
-                )
+            points.append(GPXPoint(lon=lon, lat=lat, elevation_raw_m=ele, timestamp_iso=time_iso))
         return points

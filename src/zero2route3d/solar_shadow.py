@@ -124,7 +124,10 @@ def compute_shade_exposure_along_route(
         street_bearing = math.atan2(dx, dy)
 
         # Angle between sun ray and street orientation
-        angle_diff = abs(street_bearing - sun_rad) % (math.pi / 2.0)
+        # A street is undirected, so fold with a period of pi: sin() is then 0 along
+        # the sun ray and 1 across it. Folding by pi/2 mapped a perpendicular street
+        # to 0 (fully sunlit) and a parallel one to ~pi/2 (shaded).
+        angle_diff = (street_bearing - sun_rad) % math.pi
         canyon_shading_prob = (
             math.sin(angle_diff) * building_density_factor * min(1.0, sun_shadow_len_factor * 0.35)
         )

@@ -239,7 +239,7 @@ class EnvironmentalSurfaceSampler:
         points that were resolved. Requires network access; unresolved points stay
         unknown rather than silently becoming sea level.
         """
-        if self.has_elevation_source or not coords:
+        if self.has_elevation_source or len(coords) == 0:
             return 0
         from .dem_fetcher import GlobalDemFetcher
 

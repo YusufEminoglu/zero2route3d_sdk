@@ -167,6 +167,17 @@ class GeoTiffRasterSource:
             nodata = _finite(dataset.nodata)
 
         projected = self._to_raster_crs(pairs)
+        # rasterio reports points outside the grid as the NoData value, or 0 when
+        # the file declares none -- which would read as a real sea-level sample.
+        inverse = ~dataset.transform
+        inside = []
+        for x, y in projected:
+            col, row = inverse * (x, y)
+            inside.append(0.0 <= col < dataset.width and 0.0 <= row < dataset.height)
+        valid_slots = [slot for slot, ok in zip(valid_slots, inside) if ok]
+        projected = [pt for pt, ok in zip(projected, inside) if ok]
+        if not projected:
+            return results
         try:
             samples = dataset.sample(projected, indexes=self.band)
             for slot, value in zip(valid_slots, samples):

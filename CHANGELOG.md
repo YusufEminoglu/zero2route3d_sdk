@@ -4,6 +4,44 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 ### Fixed
+- **A-star route optimality**: the great-circle heuristic was not admissible once edge cost could
+  fall below edge length (car hierarchy weight 0.6 on motorways, shade factor 0.6), so a car was
+  routed down a costlier residential street instead of a cheaper motorway detour. The heuristic
+  is now scaled by the smallest reachable per-metre multiplier.
+- **Nearest-node snapping at high latitude**: longitude buckets shrink with cos(lat), so the
+  bucket window could return a node 2.2 km north while one 1.5 km east existed. Bucket hits beyond
+  the radius the window actually covers now fall through to the full scan.
+- **GeoTIFF coverage**: `GeoTiffRasterSource.sample_many` returned rasterio's fill value (0 m) for
+  points outside a raster without a NoData value, instead of None, so a second DEM in
+  `dem_layers` was never consulted. Points off the grid are now skipped before sampling.
+- **NumPy coordinate arrays**: `GlobalDemFetcher.fetch_elevations_for_coords`,
+  `EnvironmentalSurfaceSampler.prefetch_elevations` and `export_route_to_dxf_3d` raised
+  "truth value of an array is ambiguous" for an `(n, 2)` or `(n, 3)` array.
+- **Micro-elevation half-pixel shift**: `MicroElevationEngine` interpolated relative to pixel
+  corners while sampling pixel centres, reading the DEM half a pixel east and south of the point.
+- **QML style colour**: `generate_route_qml_style(line_color_hex=...)` ignored the colour, and a
+  target ending in upper-case `.QML` was treated as a profile name and never written.
+- **Corridor base elevations**: buildings and trees took the mean elevation of the nearest route
+  segment instead of the elevation at the closest point on it.
+- **Evacuation hazards**: hazard exposure was checked only at route vertices, so a single long
+  edge could cross a hazard centre with zero risk. Clearance is now measured to the segments and
+  exposure is sampled along the densified path.
+- **Helicopter landing zones**: approach headings were math angles (0 = east) rather than compass
+  bearings, and an obstacle was counted once per heading (an obstacle inside the TLOF circle
+  reported 8 critical obstacles).
+- **Ski piste average slope**: was the unweighted mean of segment gradients, so it changed with
+  vertex spacing; it is now length-weighted.
+- **Turn-by-turn cues**: turns were announced with the length of the leg *after* the turn, and the
+  ARRIVE step number skipped one.
+- **GeoDataFrame networks**: `from_geodataframe` left every segment at hierarchy rank 4 (a
+  motorway weighed like a residential street) and read projected coordinates as degrees; it now
+  derives the rank from `highway` and reprojects to EPSG:4326. `to_networkx_digraph` read the
+  wrong metadata key and labelled every engine edge "residential".
+- **Street-canyon shading**: the street/sun angle was folded with a period of 90 degrees, so a
+  street perpendicular to the sun counted as fully sunlit and a parallel one as shaded.
+- **GPX parsing**: `HMMMapMatcher3D.parse_gpx_string` returned nothing for self-closing
+  `<trkpt .../>` elements (or merged them with the next point), and one unparsable `<ele>` dropped
+  every remaining point.
 - **Per-segment speeds as arrays**: `evaluate_micro_mobility_comfort(speeds_kmh=...)` and
   `EVEnergySimulator.simulate_route(target_speeds_kmh=...)` only indexed lists and tuples, so a
   NumPy array raised `TypeError`. Both now use the new `input_validation.value_at` helper, which

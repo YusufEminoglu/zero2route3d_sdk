@@ -45,6 +45,22 @@ def point_to_segment_distance_meters(
     return haversine_distance_2d((px, py), (proj_x, proj_y))
 
 
+def _segment_projection_fraction(
+    px: float, py: float, ax: float, ay: float, bx: float, by: float
+) -> float:
+    """Fraction (0..1) along segment AB of the point closest to P, in local metres."""
+    cos_lat = math.cos(math.radians((ay + by) * 0.5))
+    dx = (bx - ax) * 111320.0 * cos_lat
+    dy = (by - ay) * 110540.0
+    seg_len_sq = dx * dx + dy * dy
+    if not math.isfinite(seg_len_sq) or seg_len_sq <= 1e-9:
+        return 0.0
+    num = (px - ax) * 111320.0 * cos_lat * dx + (py - ay) * 110540.0 * dy
+    if not math.isfinite(num):
+        return 0.0
+    return max(0.0, min(1.0, num / seg_len_sq))
+
+
 def point_to_linestring_distance_meters(
     px: float, py: float, linestring: Sequence[Tuple[float, float]]
 ) -> float:
@@ -106,7 +122,10 @@ def get_closest_route_elevation(
         d = point_to_segment_distance_meters(px, py, p1[0], p1[1], p2[0], p2[1])
         if d < min_d:
             min_d = d
-            closest_z = (z1 + z2) * 0.5
+            # Interpolate at the closest point; the segment mean put a building next
+            # to the low end of a long climb halfway up the hill.
+            frac = _segment_projection_fraction(px, py, p1[0], p1[1], p2[0], p2[1])
+            closest_z = z1 + (z2 - z1) * frac
     return closest_z
 
 
@@ -139,7 +158,8 @@ def get_closest_multi_route_elevation(
             d = point_to_segment_distance_meters(px, py, p1[0], p1[1], p2[0], p2[1])
             if d < min_d:
                 min_d = d
-                best_z = (z1 + z2) * 0.5
+                frac = _segment_projection_fraction(px, py, p1[0], p1[1], p2[0], p2[1])
+                best_z = z1 + (z2 - z1) * frac
     return best_z
 
 

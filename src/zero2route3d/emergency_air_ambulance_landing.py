@@ -49,19 +49,22 @@ def evaluate_helicopter_landing_zones(
 
     safe_headings: list[float] = []
     max_intrusion = 0.0
-    critical_count = 0
+    # Indices of obstacles that violate a surface; counting per heading reported one
+    # obstacle inside the TLOF circle as eight critical obstacles.
+    critical_obstacles: set[int] = set()
 
     # Test 8 cardinal / intercardinal approach angles
     headings_to_test = [i * 45.0 for i in range(8)]
 
     for heading in headings_to_test:
+        # Compass heading (0 = north / +y, 90 = east / +x), not a math angle from +x.
         rad = math.radians(heading)
-        fwd_x = math.cos(rad)
-        fwd_y = math.sin(rad)
+        fwd_x = math.sin(rad)
+        fwd_y = math.cos(rad)
 
         heading_safe = True
 
-        for ob_x, ob_y, ob_z in surrounding_obstacles_3d:
+        for ob_index, (ob_x, ob_y, ob_z) in enumerate(surrounding_obstacles_3d):
             dx = ob_x - t_x
             dy = ob_y - t_y
             dist_2d = math.hypot(dx, dy)
@@ -73,7 +76,7 @@ def evaluate_helicopter_landing_zones(
             if dist_2d <= cfg.safety_buffer_radius_m:
                 if ob_z > t_z + 0.5:
                     heading_safe = False
-                    critical_count += 1
+                    critical_obstacles.add(ob_index)
                     max_intrusion = max(max_intrusion, ob_z - t_z)
                 continue
 
@@ -88,7 +91,7 @@ def evaluate_helicopter_landing_zones(
                     heading_safe = False
                     intrusion = ob_z - z_allowed
                     max_intrusion = max(max_intrusion, intrusion)
-                    critical_count += 1
+                    critical_obstacles.add(ob_index)
 
         if heading_safe:
             safe_headings.append(heading)
@@ -102,5 +105,5 @@ def evaluate_helicopter_landing_zones(
         max_obstacle_intrusion_m=max_intrusion,
         clearance_margin_m=clearance_margin,
         safe_approach_headings=safe_headings,
-        critical_obstacles_count=critical_count,
+        critical_obstacles_count=len(critical_obstacles),
     )
