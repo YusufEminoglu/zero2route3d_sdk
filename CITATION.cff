@@ -4,6 +4,7 @@ authors:
   - family-names: "Eminoğlu"
     given-names: "Yusuf"
     email: "yusufeminoglu@gmail.com"
+    orcid: "https://orcid.org/0009-0005-6000-2934"
 title: "zero2route3d-sdk"
 version: "0.13.0"
 date-released: "2026-10-26"
