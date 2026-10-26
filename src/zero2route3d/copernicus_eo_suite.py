@@ -28,6 +28,24 @@ from .dem_fetcher import NODATA, GlobalDemFetcher
 from .kinematics import haversine_distance_2d
 
 
+def _distance_to_segment_m(
+    point: Tuple[float, float], start: Tuple[float, float], end: Tuple[float, float]
+) -> float:
+    """Distance in metres from a (lon, lat) point to the closest point of a segment.
+
+    The closest point is found in a local equirectangular frame around ``point``
+    (accurate at corridor scale); the distance itself is geodesic.
+    """
+    kx = math.cos(math.radians(point[1]))
+    ax, ay = (start[0] - point[0]) * kx, start[1] - point[1]
+    bx, by = (end[0] - point[0]) * kx, end[1] - point[1]
+    dx, dy = bx - ax, by - ay
+    length_sq = dx * dx + dy * dy
+    t = 0.0 if length_sq == 0.0 else max(0.0, min(1.0, -(ax * dx + ay * dy) / length_sq))
+    closest = (start[0] + t * (end[0] - start[0]), start[1] + t * (end[1] - start[1]))
+    return haversine_distance_2d(point, closest)
+
+
 @dataclass
 class EnvironmentalLayerResult:
     """Descriptor for a generated and corridor-clipped environmental raster."""
@@ -195,16 +213,11 @@ class CopernicusEOSuite:
             for c in range(width):
                 cell_lon = min_lon + (c + 0.5) * res
 
-                min_d = float("inf")
-                for i in range(len(line_2d) - 1):
-                    p1 = line_2d[i]
-                    p2 = line_2d[i + 1]
-                    d = haversine_distance_2d((cell_lon, cell_lat), p1)
-                    if d < min_d:
-                        min_d = d
-                    d2 = haversine_distance_2d((cell_lon, cell_lat), p2)
-                    if d2 < min_d:
-                        min_d = d2
+                cell = (cell_lon, cell_lat)
+                min_d = min(
+                    _distance_to_segment_m(cell, line_2d[i], line_2d[i + 1])
+                    for i in range(len(line_2d) - 1)
+                )
 
                 if min_d > max_dist_m:
                     for grid in grids:
@@ -302,16 +315,24 @@ class CopernicusEOSuite:
             "<16H", 1, 1, 0, 3, 1024, 0, 1, 2, 1025, 0, 1, 1, 2048, 0, 1, 4326
         )
 
+        # GDAL reads the NoData value from an ASCII tag; pad to an even byte count.
+        nodata_bytes = f"{nodata_val:.17g}".encode("ascii") + b"\0"
+        nodata_count = len(nodata_bytes)
+        if nodata_count % 2:
+            nodata_bytes += b"\0"
+
         header = b"II\x2a\x00\x08\x00\x00\x00"
-        num_tags = 11
+        num_tags = 14
         ifd_offset = 8
         extra_offset = ifd_offset + 2 + num_tags * 12 + 4
 
         scale_offset = extra_offset
         tiepoint_offset = scale_offset + len(scale_bytes)
         geokey_offset = tiepoint_offset + len(tiepoint_bytes)
-        pixel_offset = geokey_offset + len(geokey_bytes)
+        nodata_offset = geokey_offset + len(geokey_bytes)
+        pixel_offset = nodata_offset + len(nodata_bytes)
 
+        # TIFF requires IFD entries in ascending tag order.
         tags = [
             struct.pack("<HHII", 256, 4, 1, width),
             struct.pack("<HHII", 257, 4, 1, height),
@@ -322,12 +343,17 @@ class CopernicusEOSuite:
             struct.pack("<HHII", 277, 3, 1, 1),
             struct.pack("<HHII", 278, 4, 1, height),
             struct.pack("<HHII", 279, 4, 1, len(raw_pixels)),
+            struct.pack("<HHII", 339, 3, 1, 3),  # SampleFormat: IEEE float
             struct.pack("<HHII", 33550, 12, 3, scale_offset),
             struct.pack("<HHII", 33922, 12, 6, tiepoint_offset),
+            struct.pack("<HHII", 34735, 3, len(geokey_bytes) // 2, geokey_offset),
+            struct.pack("<HHII", 42113, 2, nodata_count, nodata_offset),  # GDAL_NODATA
         ]
 
         ifd = struct.pack("<H", num_tags) + b"".join(tags) + struct.pack("<I", 0)
-        file_bytes = header + ifd + scale_bytes + tiepoint_bytes + geokey_bytes + raw_pixels
+        file_bytes = (
+            header + ifd + scale_bytes + tiepoint_bytes + geokey_bytes + nodata_bytes + raw_pixels
+        )
 
         file_path.parent.mkdir(parents=True, exist_ok=True)
         file_path.write_bytes(file_bytes)

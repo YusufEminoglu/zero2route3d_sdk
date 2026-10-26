@@ -8,6 +8,15 @@ All notable changes to this project will be documented in this file.
   `EVEnergySimulator.simulate_route(target_speeds_kmh=...)` only indexed lists and tuples, so a
   NumPy array raised `TypeError`. Both now use the new `input_validation.value_at` helper, which
   treats any non-scalar as a sequence and any real scalar (including NumPy scalars) as constant.
+- **Pure-Python GeoTIFF writer** (`CopernicusEOSuite`, used when GDAL is absent): the file
+  declared no `SampleFormat`, so readers decoded the float32 elevations as `uint32` garbage, and
+  the EPSG:4326 GeoKeys and NoData value were written but never referenced by an IFD tag. The
+  writer now emits `SampleFormat`, `GeoKeyDirectoryTag` and `GDAL_NODATA` in ascending tag order.
+- **Corridor raster mask**: cells were kept only near route *vertices*, so everything between two
+  distant vertices was masked to NoData. Distance is now measured to each route segment.
+- **OSM building styling**: every building type outside the explicit lists, including the common
+  `building=yes`, was coloured as "Civic". Civic now covers explicit civic/public types, the rest
+  fall through to the `type` attribute rules and then "Other". Verified against QGIS LTR.
 - **Packaging**: the build requirement now matches the PEP 639 `license = "MIT"` string
   (setuptools 77+) and `license-files` is declared. mypy is clean.
 

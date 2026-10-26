@@ -238,7 +238,7 @@ def _building_renderer(theme: dict) -> Any:
         " WHEN lower(coalesce(\"building\",'')) IN ('commercial','retail','office','supermarket','kiosk','hotel') THEN 'building_commercial'"
         " WHEN lower(coalesce(\"building\",'')) IN ('industrial','warehouse','manufacture','hangar','factory') THEN 'building_industrial'"
         " WHEN lower(coalesce(\"building\",'')) IN ('church','mosque','temple','synagogue','cathedral','chapel') THEN 'building_worship'"
-        " WHEN coalesce(\"building\",'') <> '' THEN 'building_civic'"
+        " WHEN lower(coalesce(\"building\",'')) IN ('civic','public','government','townhall','school','university','college','kindergarten','hospital','fire_station','train_station','transportation') THEN 'building_civic'"
         " WHEN lower(coalesce(\"type\",'')) IN ('commercial','retail','office') THEN 'building_commercial'"
         " WHEN lower(coalesce(\"type\",'')) IN ('industrial','warehouse') THEN 'building_industrial'"
         " ELSE 'building_other' END"
