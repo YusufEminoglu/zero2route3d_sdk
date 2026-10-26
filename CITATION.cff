@@ -7,6 +7,7 @@ authors:
     orcid: "https://orcid.org/0009-0005-6000-2934"
 title: "zero2route3d-sdk"
 version: "0.13.0"
+doi: "10.5281/zenodo.23677255"
 date-released: "2026-10-26"
 license: "MIT"
 repository-code: "https://github.com/YusufEminoglu/zero2route3d_sdk"

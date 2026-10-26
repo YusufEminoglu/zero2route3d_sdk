@@ -8,6 +8,7 @@
 
 
 [![PyPI version](https://img.shields.io/pypi/v/zero2route3d-sdk.svg?color=10b981)](https://pypi.org/project/zero2route3d-sdk/)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23677255.svg)](https://doi.org/10.5281/zenodo.23677255)
 [![Python version support](https://img.shields.io/pypi/pyversions/zero2route3d-sdk.svg?color=3b82f6)](https://pypi.org/project/zero2route3d-sdk/)
 [![Documentation](https://img.shields.io/badge/docs-GEOPHILO-10b981.svg)](https://geophilo.com/zero2route3d_sdk/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/YusufEminoglu/zero2route3d_sdk/blob/main/LICENSE)
@@ -373,8 +374,9 @@ If you use **zero2route3d-sdk** in scientific research, transportation planning 
   author    = {Emino{\u{g}}lu, Yusuf},
   title     = {{zero2route3d-sdk: Headless 3D spatial mobility, biomechanical human kinematics, and multi-criteria routing engine}},
   year      = {2026},
-  publisher = {PyPI - Python Package Index},
+  publisher = {Zenodo},
   version   = {0.13.0},
+  doi       = {10.5281/zenodo.23677255},
   url       = {https://gitlab.com/geospacephilo/zero2route3d_sdk}
 }
 ```
