@@ -38,7 +38,7 @@ pip install "zero2route3d-sdk[dev]"
 pip install "zero2route3d-sdk[geo,dev]"
 
 # Editable install from a clone, for contributing
-git clone https://gitlab.com/geospacephilo/zero2route3d_sdk.git
+git clone https://github.com/YusufEminoglu/zero2route3d_sdk.git
 cd zero2route3d_sdk
 pip install -e ".[geo,dev]"
 ```
@@ -350,7 +350,7 @@ Everything below is re-exported from the top-level `zero2route3d` package.
 
 ```bash
 # Clone repository and install in editable mode
-git clone https://gitlab.com/geospacephilo/zero2route3d_sdk.git
+git clone https://github.com/YusufEminoglu/zero2route3d_sdk.git
 cd zero2route3d_sdk
 pip install -e ".[dev]"
 
@@ -377,7 +377,7 @@ If you use **zero2route3d-sdk** in scientific research, transportation planning 
   publisher = {Zenodo},
   version   = {0.13.0},
   doi       = {10.5281/zenodo.23677255},
-  url       = {https://gitlab.com/geospacephilo/zero2route3d_sdk}
+  url       = {https://github.com/YusufEminoglu/zero2route3d_sdk}
 }
 ```
 
